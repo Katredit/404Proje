@@ -1,29 +1,29 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import './SellerPage.css';
 
-const CATEGORIES = [
-  { value: 'ceramic',  label: 'Seramik',       icon: 'local_dining', color: '#C0392B', accent: '#E74C3C', roof: '#922B21' },
-  { value: 'kilim',    label: 'Halı & Kilim',   icon: 'grid_view',    color: '#2980B9', accent: '#3498DB', roof: '#1A5276' },
-  { value: 'stone',    label: 'Takı',           icon: 'diamond',      color: '#27AE60', accent: '#2ECC71', roof: '#1E8449' },
-  { value: 'wood',     label: 'Ahşap İşi',      icon: 'forest',       color: '#8E44AD', accent: '#9B59B6', roof: '#6C3483' },
-  { value: 'metal',    label: 'Bakır & Metal',  icon: 'local_cafe',   color: '#D35400', accent: '#E67E22', roof: '#A04000' },
-  { value: 'textile',  label: 'Tekstil',        icon: 'checkroom',    color: '#F39C12', accent: '#F1C40F', roof: '#B7770D' },
-  { value: 'glass',    label: 'Cam Sanatı',     icon: 'water_drop',   color: '#16A085', accent: '#1ABC9C', roof: '#0E6655' },
-  { value: 'leather',  label: 'Deri İşçiliği',  icon: 'style',        color: '#7F8C8D', accent: '#95A5A6', roof: '#626567' },
+const CATEGORY_DEFS = [
+  { value: 'ceramic', icon: 'local_dining', color: '#C0392B', accent: '#E74C3C', roof: '#922B21' },
+  { value: 'kilim',   icon: 'grid_view',    color: '#2980B9', accent: '#3498DB', roof: '#1A5276' },
+  { value: 'stone',   icon: 'diamond',      color: '#27AE60', accent: '#2ECC71', roof: '#1E8449' },
+  { value: 'wood',    icon: 'forest',       color: '#8E44AD', accent: '#9B59B6', roof: '#6C3483' },
+  { value: 'metal',   icon: 'local_cafe',   color: '#D35400', accent: '#E67E22', roof: '#A04000' },
+  { value: 'textile', icon: 'checkroom',    color: '#F39C12', accent: '#F1C40F', roof: '#B7770D' },
+  { value: 'glass',   icon: 'water_drop',   color: '#16A085', accent: '#1ABC9C', roof: '#0E6655' },
+  { value: 'leather', icon: 'style',        color: '#7F8C8D', accent: '#95A5A6', roof: '#626567' },
 ];
 
-const FLAGS = [
-  { emoji: '🔴', label: 'Kırmızı' },
-  { emoji: '🔵', label: 'Mavi' },
-  { emoji: '🟢', label: 'Yeşil' },
-  { emoji: '🟣', label: 'Mor' },
-  { emoji: '🟠', label: 'Turuncu' },
-  { emoji: '🟡', label: 'Sarı' },
-  { emoji: '🟤', label: 'Kahverengi' },
-  { emoji: '⚪', label: 'Beyaz' },
+const FLAG_EMOJIS = [
+  { emoji: '🔴', key: 'red' },
+  { emoji: '🔵', key: 'blue' },
+  { emoji: '🟢', key: 'green' },
+  { emoji: '🟣', key: 'purple' },
+  { emoji: '🟠', key: 'orange' },
+  { emoji: '🟡', key: 'yellow' },
+  { emoji: '🟤', key: 'brown' },
+  { emoji: '⚪', key: 'white' },
 ];
-
-const STEPS = ['Mağaza Bilgileri', 'Konum', 'Onay'];
 
 const initialForm = {
   name: '', owner: '', category: '', description: '',
@@ -32,13 +32,13 @@ const initialForm = {
   color: '#C0392B', accentColor: '#E74C3C', roofColor: '#922B21',
 };
 
-function StepIndicator({ current }) {
+function StepIndicator({ current, steps }) {
   const progress = current === 0 ? '0%' : current === 1 ? '50%' : '100%';
   return (
     <div className="seller-steps">
       <div className="seller-steps__track" />
       <div className="seller-steps__progress" style={{ width: progress }} />
-      {STEPS.map((label, i) => (
+      {steps.map((label, i) => (
         <div
           key={i}
           className={`seller-step${i === current ? ' seller-step--active' : ''}${i < current ? ' seller-step--done' : ''}`}
@@ -54,9 +54,15 @@ function StepIndicator({ current }) {
 }
 
 export default function SellerPage({ onBack, onSubmit, onNavigate }) {
-  const [step, setStep]         = useState(0);
-  const [form, setForm]         = useState(initialForm);
-  const [errors, setErrors]     = useState({});
+  const { t } = useTranslation();
+
+  const CATEGORIES = CATEGORY_DEFS.map((c) => ({ ...c, label: t(`seller.categories.${c.value}`) }));
+  const FLAGS = FLAG_EMOJIS.map((f) => ({ ...f, label: t(`seller.flags.${f.key}`) }));
+  const STEPS = t('seller.steps', { returnObjects: true });
+
+  const [step, setStep]           = useState(0);
+  const [form, setForm]           = useState(initialForm);
+  const [errors, setErrors]       = useState({});
   const [submitted, setSubmitted] = useState(false);
 
   const navigate = (page) => { onNavigate?.(page); onBack?.(); };
@@ -73,16 +79,16 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
 
   const validateStep0 = () => {
     const e = {};
-    if (!form.name.trim())        e.name = 'Mağaza adı zorunludur.';
-    if (!form.owner.trim())       e.owner = 'Yetkili adı zorunludur.';
-    if (!form.category)           e.category = 'Kategori seçiniz.';
-    if (!form.description.trim()) e.description = 'Mağaza tanıtımı zorunludur.';
+    if (!form.name.trim())        e.name = t('seller.errorName');
+    if (!form.owner.trim())       e.owner = t('seller.errorOwner');
+    if (!form.category)           e.category = t('seller.errorCategory');
+    if (!form.description.trim()) e.description = t('seller.errorDescription');
     return e;
   };
 
   const validateStep1 = () => {
     const e = {};
-    if (!form.location.trim()) e.location = 'Konum zorunludur.';
+    if (!form.location.trim()) e.location = t('seller.errorLocation');
     return e;
   };
 
@@ -103,18 +109,15 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
       <div className="seller-page">
         <div className="seller-page__nav-outer">
           <header className="seller-page__nav">
-            <div className="seller-page__brand" onClick={() => navigate('market')}>Kapadokya Çarşısı</div>
+            <div className="seller-page__brand" onClick={() => navigate('market')}>{t('nav.brand')}</div>
           </header>
         </div>
         <div className="seller-page__success">
           <div className="seller-page__success-icon">🎉</div>
-          <h2>Mağazanız Açıldı!</h2>
-          <p>
-            <strong>{form.name}</strong> artık Kapadokya Çarşısı'nda yerini aldı.<br />
-            3D çarşıya dönerek mağazanızı görebilirsiniz.
-          </p>
+          <h2>{t('seller.successTitle')}</h2>
+          <p dangerouslySetInnerHTML={{ __html: t('seller.successText', { name: form.name }) }} />
           <button className="seller-page__success-btn" onClick={onBack}>
-            <span className="ms">storefront</span>Çarşıya Git
+            <span className="ms">storefront</span>{t('seller.goToMarket')}
           </button>
         </div>
       </div>
@@ -129,15 +132,16 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
       {/* ── Navbar ── */}
       <div className="seller-page__nav-outer">
         <header className="seller-page__nav">
-          <div className="seller-page__brand" onClick={() => navigate('market')}>Kapadokya Çarşısı</div>
+          <div className="seller-page__brand" onClick={() => navigate('market')}>{t('nav.brand')}</div>
           <nav className="seller-page__nav-links">
-            <button className="seller-page__nav-link" onClick={() => navigate('market')}>Çarşı</button>
-            <button className="seller-page__nav-link" onClick={() => navigate('ai')}>AI Tasarım</button>
-            <button className="seller-page__nav-link seller-page__nav-link--active">Satıcı Ol</button>
+            <button className="seller-page__nav-link" onClick={() => navigate('market')}>{t('nav.market')}</button>
+            <button className="seller-page__nav-link" onClick={() => navigate('ai')}>{t('nav.ai')}</button>
+            <button className="seller-page__nav-link seller-page__nav-link--active">{t('nav.seller')}</button>
           </nav>
           <div className="seller-page__nav-actions">
             <button className="seller-page__nav-icon-btn"><span className="ms">shopping_basket</span></button>
             <button className="seller-page__nav-icon-btn"><span className="ms">person</span></button>
+            <LanguageSwitcher />
           </div>
         </header>
       </div>
@@ -146,11 +150,8 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
 
         {/* ── Sol bilgi kolonu ── */}
         <aside className="seller-page__info">
-          <h1 className="seller-page__info-title">Neden Kapadokya Çarşısı?</h1>
-          <p className="seller-page__info-desc">
-            Geleneksel zanaatınızı modern teknolojiyle birleştirin. Global bir pazarda,
-            size özel araçlarla büyümeye hemen başlayın.
-          </p>
+          <h1 className="seller-page__info-title">{t('seller.whyTitle')}</h1>
+          <p className="seller-page__info-desc">{t('seller.whyDesc')}</p>
 
           <div className="seller-page__benefits">
             <div className="seller-page__benefit">
@@ -158,8 +159,8 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 <span className="ms">view_in_ar</span>
               </div>
               <div className="seller-page__benefit-body">
-                <h3>3D Vitrin Deneyimi</h3>
-                <p>Müşterilerinize ürünlerinizi her açıdan gösterin.</p>
+                <h3>{t('seller.benefit3D')}</h3>
+                <p>{t('seller.benefit3DDesc')}</p>
               </div>
             </div>
             <div className="seller-page__benefit">
@@ -167,8 +168,8 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 <span className="ms">smart_toy</span>
               </div>
               <div className="seller-page__benefit-body">
-                <h3>Yapay Zeka Desteği</h3>
-                <p>Koleksiyon yönetimi ve fiyatlandırma asistanı.</p>
+                <h3>{t('seller.benefitAI')}</h3>
+                <p>{t('seller.benefitAIDesc')}</p>
               </div>
             </div>
             <div className="seller-page__benefit">
@@ -176,15 +177,15 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 <span className="ms">public</span>
               </div>
               <div className="seller-page__benefit-body">
-                <h3>Global Müşteri Ağı</h3>
-                <p>Sınırları aşın, tüm dünyaya satış yapın.</p>
+                <h3>{t('seller.benefitGlobal')}</h3>
+                <p>{t('seller.benefitGlobalDesc')}</p>
               </div>
             </div>
           </div>
 
           {/* Canlı önizleme kartı */}
           <div className="seller-page__preview-card">
-            <div className="seller-page__preview-label">Canlı Önizleme</div>
+            <div className="seller-page__preview-label">{t('seller.previewLabel')}</div>
             <div
               className="seller-page__preview-img"
               style={{ background: (previewCat?.color ?? '#fce4cc') + '33' }}
@@ -197,10 +198,10 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
               </div>
               <div>
                 <div className="seller-page__preview-name">
-                  {form.name || 'Zanaatkar Koleksiyonu'}
+                  {form.name || t('seller.previewDefault')}
                 </div>
                 <div className="seller-page__preview-cat">
-                  {form.category || 'Seramik & Çini Sanatı'}
+                  {form.category || t('seller.previewCatDefault')}
                 </div>
               </div>
             </div>
@@ -211,19 +212,19 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
         <div className="seller-page__wizard">
 
           <div>
-            <StepIndicator current={step} />
+            <StepIndicator current={step} steps={STEPS} />
 
             {/* ── ADIM 0 – Mağaza Bilgileri ── */}
             {step === 0 && (
               <div className="seller-page__step-content">
-                <h2 className="seller-page__step-title">Mağazanızı Oluşturun</h2>
+                <h2 className="seller-page__step-title">{t('seller.step0Title')}</h2>
 
                 <div className="seller-page__field-row">
                   <div className="seller-page__field">
-                    <label className="seller-page__label">Mağaza Adı <span className="seller-page__req">*</span></label>
+                    <label className="seller-page__label">{t('seller.fieldStoreName')} <span className="seller-page__req">*</span></label>
                     <input
                       className={`seller-page__input${errors.name ? ' seller-page__input--error' : ''}`}
-                      placeholder="Örn: Kapadokya Çini Evi"
+                      placeholder={t('seller.storeNamePlaceholder')}
                       value={form.name}
                       onChange={(e) => set('name', e.target.value)}
                       maxLength={60}
@@ -231,10 +232,10 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                     {errors.name && <span className="seller-page__error-msg">{errors.name}</span>}
                   </div>
                   <div className="seller-page__field">
-                    <label className="seller-page__label">Sahibinin Adı <span className="seller-page__req">*</span></label>
+                    <label className="seller-page__label">{t('seller.fieldOwner')} <span className="seller-page__req">*</span></label>
                     <input
                       className={`seller-page__input${errors.owner ? ' seller-page__input--error' : ''}`}
-                      placeholder="Adınız Soyadınız"
+                      placeholder={t('seller.ownerPlaceholder')}
                       value={form.owner}
                       onChange={(e) => set('owner', e.target.value)}
                       maxLength={60}
@@ -244,7 +245,7 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 </div>
 
                 <div className="seller-page__field">
-                  <label className="seller-page__label">Ana Kategori Seçin <span className="seller-page__req">*</span></label>
+                  <label className="seller-page__label">{t('seller.fieldCategory')} <span className="seller-page__req">*</span></label>
                   <div className="seller-page__categories">
                     {CATEGORIES.map((cat) => (
                       <button
@@ -262,10 +263,10 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 </div>
 
                 <div className="seller-page__field">
-                  <label className="seller-page__label">Mağaza Tanıtımı <span className="seller-page__req">*</span></label>
+                  <label className="seller-page__label">{t('seller.fieldDescription')} <span className="seller-page__req">*</span></label>
                   <textarea
                     className={`seller-page__textarea${errors.description ? ' seller-page__input--error' : ''}`}
-                    placeholder="Mağazanızı ve ürünlerinizi kısaca tanıtın..."
+                    placeholder={t('seller.descPlaceholder')}
                     value={form.description}
                     onChange={(e) => set('description', e.target.value)}
                     rows={3}
@@ -280,21 +281,21 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
             {/* ── ADIM 1 – Konum ── */}
             {step === 1 && (
               <div className="seller-page__step-content">
-                <h2 className="seller-page__step-title">Konum & Görünüm</h2>
+                <h2 className="seller-page__step-title">{t('seller.step1Title')}</h2>
 
                 <div className="seller-page__field-row">
                   <div className="seller-page__field">
-                    <label className="seller-page__label">Konum <span className="seller-page__req">*</span></label>
+                    <label className="seller-page__label">{t('seller.fieldLocation')} <span className="seller-page__req">*</span></label>
                     <input
                       className={`seller-page__input${errors.location ? ' seller-page__input--error' : ''}`}
-                      placeholder="Örn: Göreme, Nevşehir"
+                      placeholder={t('seller.locationPlaceholder')}
                       value={form.location}
                       onChange={(e) => set('location', e.target.value)}
                     />
                     {errors.location && <span className="seller-page__error-msg">{errors.location}</span>}
                   </div>
                   <div className="seller-page__field">
-                    <label className="seller-page__label">Kuruluş Yılı</label>
+                    <label className="seller-page__label">{t('seller.fieldYear')}</label>
                     <input
                       className="seller-page__input"
                       type="number"
@@ -307,10 +308,10 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 </div>
 
                 <div className="seller-page__field">
-                  <label className="seller-page__label">Mağaza Rozeti</label>
+                  <label className="seller-page__label">{t('seller.fieldBadge')}</label>
                   <input
                     className="seller-page__input"
-                    placeholder="Örn: El Yapımı, Çok Satan, Yeni..."
+                    placeholder={t('seller.fieldBadgePlaceholder')}
                     value={form.badge}
                     onChange={(e) => set('badge', e.target.value)}
                     maxLength={20}
@@ -318,7 +319,7 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 </div>
 
                 <div className="seller-page__field">
-                  <label className="seller-page__label">Mağaza Simgesi</label>
+                  <label className="seller-page__label">{t('seller.fieldFlag')}</label>
                   <div className="seller-page__flags">
                     {FLAGS.map((f) => (
                       <button
@@ -335,7 +336,7 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 </div>
 
                 <div className="seller-page__field">
-                  <label className="seller-page__label">Mağaza Rengi</label>
+                  <label className="seller-page__label">{t('seller.fieldColor')}</label>
                   <div className="seller-page__color-row">
                     {CATEGORIES.map((cat) => (
                       <button
@@ -355,7 +356,7 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
             {/* ── ADIM 2 – Onay ── */}
             {step === 2 && (
               <div className="seller-page__step-content">
-                <h2 className="seller-page__step-title">Bilgileri Onayla</h2>
+                <h2 className="seller-page__step-title">{t('seller.step2Title')}</h2>
 
                 <div className="seller-page__review">
                   <div className="seller-page__review-header" style={{ background: form.color + '18', borderColor: form.accentColor }}>
@@ -368,19 +369,21 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                   </div>
                   <table className="seller-page__review-table">
                     <tbody>
-                      <tr><td>Yetkili</td><td>{form.owner}</td></tr>
-                      <tr><td>Konum</td><td>{form.location}</td></tr>
-                      <tr><td>Kuruluş</td><td>{form.openSince}</td></tr>
-                      <tr><td>Açıklama</td><td>{form.description}</td></tr>
+                      <tr><td>{t('seller.tableOwner')}</td><td>{form.owner}</td></tr>
+                      <tr><td>{t('seller.tableLocation')}</td><td>{form.location}</td></tr>
+                      <tr><td>{t('seller.tableYear')}</td><td>{form.openSince}</td></tr>
+                      <tr><td>{t('seller.tableDesc')}</td><td>{form.description}</td></tr>
                     </tbody>
                   </table>
                 </div>
 
                 <div className="seller-page__terms">
                   <p>
-                    "Mağazamı Aç" butonuna tıklayarak{' '}
-                    <a href="#" onClick={(e) => e.preventDefault()}>Kullanım Şartları</a>'nı ve{' '}
-                    <a href="#" onClick={(e) => e.preventDefault()}>Satıcı Politikası</a>'nı kabul etmiş olursunuz.
+                    {t('seller.termsText')}{' '}
+                    <a href="#" onClick={(e) => e.preventDefault()}>{t('seller.termsLink1')}</a>{' '}
+                    {t('seller.termsAnd')}{' '}
+                    <a href="#" onClick={(e) => e.preventDefault()}>{t('seller.termsLink2')}</a>
+                    {t('seller.termsEnd')}
                   </p>
                 </div>
               </div>
@@ -393,16 +396,16 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
               className="seller-page__btn seller-page__btn--cancel"
               onClick={step > 0 ? () => setStep((s) => s - 1) : onBack}
             >
-              {step > 0 ? 'Geri' : 'İptal'}
+              {step > 0 ? t('seller.back') : t('seller.cancel')}
             </button>
 
             {step < STEPS.length - 1 ? (
               <button className="seller-page__btn seller-page__btn--primary" onClick={handleNext}>
-                Devam Et <span className="ms">arrow_forward</span>
+                {t('seller.next')} <span className="ms">arrow_forward</span>
               </button>
             ) : (
               <button className="seller-page__btn seller-page__btn--primary" onClick={handleSubmit}>
-                <span className="ms">storefront</span>Mağazamı Aç
+                <span className="ms">storefront</span>{t('seller.submit')}
               </button>
             )}
           </div>
@@ -411,3 +414,4 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
     </div>
   );
 }
+

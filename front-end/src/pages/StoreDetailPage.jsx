@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Product3DModal from '../components/Product3DModal';
 import './StoreDetail.css';
 
@@ -9,6 +10,7 @@ const CATEGORY_ICONS = {
 };
 
 function ProductCard({ product, store, onView3D }) {
+  const { t } = useTranslation();
   const is3D = product.type === 'kilim' || product.type === 'ceramic';
 
   const previewStyle = product.colors
@@ -43,7 +45,7 @@ function ProductCard({ product, store, onView3D }) {
           {product.material && <span className="pcard__tag">📌 {product.material}</span>}
           {product.size && <span className="pcard__tag">📐 {product.size}</span>}
           {product.height && <span className="pcard__tag">📏 {product.height}</span>}
-          <span className="pcard__tag">📦 {product.stock} adet</span>
+          <span className="pcard__tag">📦 {t('storeDetail.stock', { count: product.stock })}</span>
         </div>
 
         {product.colors && (
@@ -67,14 +69,14 @@ function ProductCard({ product, store, onView3D }) {
             style={{ borderColor: store.accentColor, color: store.accentColor }}
             onClick={() => onView3D(product)}
           >
-            🔍 3D İncele
+            🔍 {t('storeDetail.view3D')}
           </button>
         )}
         <button
           className="pcard__btn pcard__btn--buy"
           style={{ backgroundColor: store.accentColor }}
         >
-          🛒 Sepete Ekle
+          🛒 {t('storeDetail.addToCart')}
         </button>
       </div>
     </div>
@@ -82,6 +84,7 @@ function ProductCard({ product, store, onView3D }) {
 }
 
 function StoreDetailPage({ store, onBack }) {
+  const { t } = useTranslation();
   const [activeProduct, setActiveProduct] = useState(null);
 
   return (
@@ -89,7 +92,7 @@ function StoreDetailPage({ store, onBack }) {
       {/* ── Üst Navigasyon ── */}
       <header className="store-detail__navbar">
         <button className="store-detail__back" onClick={onBack}>
-          ← Çarşıya Dön
+          {t('storeDetail.back')}
         </button>
         <div className="store-detail__brand">
           <span className="store-detail__flag">{store.flag}</span>
@@ -97,7 +100,7 @@ function StoreDetailPage({ store, onBack }) {
             <h1 className="store-detail__title">{store.name}</h1>
             <span className="store-detail__meta">
               {store.category} &nbsp;·&nbsp; {store.location} &nbsp;·&nbsp;
-              ⭐ {store.rating} ({store.reviewCount} yorum)
+              ⭐ {store.rating} ({store.reviewCount} {t('storeDetail.reviewSuffix')})
             </span>
           </div>
         </div>
@@ -126,7 +129,7 @@ function StoreDetailPage({ store, onBack }) {
             <p className="store-detail__desc">{store.description}</p>
             <div className="store-detail__info-row">
               <span>👤 {store.owner}</span>
-              <span>🗓️ {store.openSince}'den beri</span>
+              <span>🗓️ {t('storeDetail.since', { year: store.openSince })}</span>
               <span>📍 {store.location}</span>
             </div>
           </div>
@@ -134,15 +137,15 @@ function StoreDetailPage({ store, onBack }) {
         <div className="store-detail__hero-stats">
           <div className="store-detail__stat">
             <span className="store-detail__stat-val">{store.rating}</span>
-            <span className="store-detail__stat-lbl">Puan</span>
+            <span className="store-detail__stat-lbl">{t('storeDetail.score')}</span>
           </div>
           <div className="store-detail__stat">
             <span className="store-detail__stat-val">{store.reviewCount}</span>
-            <span className="store-detail__stat-lbl">Yorum</span>
+            <span className="store-detail__stat-lbl">{t('storeDetail.reviews')}</span>
           </div>
           <div className="store-detail__stat">
             <span className="store-detail__stat-val">{store.products.length}</span>
-            <span className="store-detail__stat-lbl">Ürün</span>
+            <span className="store-detail__stat-lbl">{t('storeDetail.products')}</span>
           </div>
         </div>
       </div>
@@ -150,9 +153,9 @@ function StoreDetailPage({ store, onBack }) {
       {/* ── Ürün Izgarası ── */}
       <main className="store-detail__main">
         <div className="store-detail__section-header">
-          <h2 className="store-detail__section-title">Ürünler</h2>
+          <h2 className="store-detail__section-title">{t('storeDetail.productsTitle')}</h2>
           <span className="store-detail__section-sub">
-            {store.products.filter(p => p.type !== 'other').length} ürün 3D görüntülenebilir
+            {t('storeDetail.can3D', { count: store.products.filter(p => p.type !== 'other').length })}
           </span>
         </div>
 

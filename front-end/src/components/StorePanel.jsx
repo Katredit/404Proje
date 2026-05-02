@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next';
+
 function StorePanel({ store, onClose, onVisit }) {
+  const { t } = useTranslation();
   if (!store) return null;
 
   const bgColor = store.accentColor ? store.accentColor + '22' : '#fce4cc';
@@ -7,7 +10,7 @@ function StorePanel({ store, onClose, onVisit }) {
     <>
       <div className="store-panel__img-area" style={{ background: bgColor }}>
         <div className="store-panel__img-fallback">{store.flag}</div>
-        <button className="store-panel__close" onClick={onClose} aria-label="Kapat">
+        <button className="store-panel__close" onClick={onClose} aria-label={t('panel.close')}>
           <span className="ms">close</span>
         </button>
       </div>
@@ -26,16 +29,16 @@ function StorePanel({ store, onClose, onVisit }) {
         <div className="store-panel__stats">
           <div className="store-panel__stat">
             <span className="store-panel__stat-val">{store.products.length}</span>
-            <span className="store-panel__stat-lbl">Ürün</span>
+            <span className="store-panel__stat-lbl">{t('panel.products')}</span>
           </div>
           <div className="store-panel__stat">
             <span className="store-panel__stat-val">{store.reviewCount ?? 0}</span>
-            <span className="store-panel__stat-lbl">Yorum</span>
+            <span className="store-panel__stat-lbl">{t('panel.reviews')}</span>
           </div>
         </div>
 
         <div className="store-panel__products">
-          <h4 className="store-panel__products-title">Öne Çıkan Ürünler</h4>
+          <h4 className="store-panel__products-title">{t('panel.featured')}</h4>
           <div className="store-panel__product-scroll">
             {store.products.map((p) => (
               <div key={p.id} className="store-panel__product-thumb">
@@ -56,7 +59,7 @@ function StorePanel({ store, onClose, onVisit }) {
             className="store-panel__btn store-panel__btn--primary"
             onClick={() => onVisit && onVisit(store)}
           >
-            Mağazayı Ziyaret Et
+            {t('panel.visit')}
           </button>
         </div>
       </div>

@@ -1,24 +1,17 @@
 ﻿import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import MarketScene from './components/MarketScene';
 import StorePanel from './components/StorePanel';
 import StoreListSidebar from './components/StoreListSidebar';
 import StoreDetailPage from './pages/StoreDetailPage';
 import AIDesignPage from './pages/AIDesignPage';
 import SellerPage from './pages/SellerPage';
-import { stores as staticStores } from './data/stores';
+import LanguageSwitcher from './components/LanguageSwitcher';
+import { stores as staticStores, positions as storePositions } from './data/stores';
 import './App.css';
 
-// Yeni satıcı için 3D pozisyon hesapla
-function autoPosition(index) {
-  const positions = [
-    [-4, 0, 4], [4, 0, 4], [-8, 0, 4], [8, 0, 4],
-    [-12, 0, -2], [12, 0, -2], [-12, 0, 4], [12, 0, 4],
-    [0, 0, 8], [-6, 0, 8], [6, 0, 8],
-  ];
-  return positions[index % positions.length] || [0, 0, index * 5];
-}
-
 function App() {
+  const { t } = useTranslation();
   const [selectedStore, setSelectedStore] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -45,7 +38,7 @@ function App() {
       reviewCount: 0,
       products: [],
       badge: 'Yeni',
-      position: autoPosition(dynamicStores.length + staticStores.length),
+      position: storePositions[(dynamicStores.length + staticStores.length) % storePositions.length],
     };
     const updated = [...dynamicStores, newStore];
     setDynamicStores(updated);
@@ -94,28 +87,29 @@ function App() {
           <div className="navbar__brand" onClick={() => setActivePage('market')}>
             <span className="navbar__logo">🏔️</span>
             <div className="navbar__brand-text">
-              <span className="navbar__title">Kapadokya Çarşısı</span>
-              <span className="navbar__subtitle">El Sanatları & Yöresel Ürünler</span>
+              <span className="navbar__title">{t('nav.brand')}</span>
+              <span className="navbar__subtitle">{t('nav.subtitle')}</span>
             </div>
           </div>
           <nav className="navbar__links">
             <button
               className={`navbar__link${activePage === 'market' ? ' navbar__link--active' : ''}`}
               onClick={() => setActivePage('market')}
-            >Çarşı</button>
+            >{t('nav.market')}</button>
             <button
               className={`navbar__link${activePage === 'ai' ? ' navbar__link--active' : ''}`}
               onClick={() => setActivePage('ai')}
-            >Yapay Zeka Tasarım</button>
+            >{t('nav.aiLong')}</button>
             <button
               className={`navbar__link${activePage === 'seller' ? ' navbar__link--active' : ''}`}
               onClick={() => setActivePage('seller')}
-            >Satıcı Ol</button>
+            >{t('nav.seller')}</button>
           </nav>
           <div className="navbar__actions">
             <button className="navbar__btn navbar__btn--icon"><span className="ms">search</span></button>
             <button className="navbar__btn navbar__btn--icon"><span className="ms">shopping_basket</span></button>
-            <button className="navbar__btn navbar__btn--primary">Giriş Yap</button>
+            <button className="navbar__btn navbar__btn--primary">{t('nav.login')}</button>
+            <LanguageSwitcher />
           </div>
         </header>
       </div>
@@ -124,7 +118,7 @@ function App() {
         <button
           className={`sidebar-toggle${sidebarOpen ? ' sidebar-toggle--open' : ''}`}
           onClick={() => setSidebarOpen((v) => !v)}
-          title="Mağaza listesini göster/gizle"
+          title={t('sidebar.title')}
         >
           {sidebarOpen ? '◀' : '▶'}
         </button>
@@ -148,16 +142,16 @@ function App() {
             setHoveredId={setHoveredId}
           />
           <div className="canvas-hint">
-            <span className="canvas-hint__item"><span className="ms">mouse</span>Sürükle: döndür</span>
+            <span className="canvas-hint__item"><span className="ms">mouse</span>{t('market.hintRotate')}</span>
             <span className="canvas-hint__sep">•</span>
-            <span className="canvas-hint__item"><span className="ms">swap_vert</span>Scroll: zoom</span>
+            <span className="canvas-hint__item"><span className="ms">swap_vert</span>{t('market.hintZoom')}</span>
             <span className="canvas-hint__sep">•</span>
-            <span className="canvas-hint__item"><span className="ms">store</span>Mağazaya tıkla: detay</span>
+            <span className="canvas-hint__item"><span className="ms">store</span>{t('market.hintClick')}</span>
           </div>
           {!selectedStore && (
             <div className="canvas-overlay">
-              <h1 className="canvas-overlay__title">Kapadokya 3D Çarşısı</h1>
-              <p className="canvas-overlay__sub">Mağazaları keşfetmek için tıkla veya döndür</p>
+              <h1 className="canvas-overlay__title">{t('market.title')}</h1>
+              <p className="canvas-overlay__sub">{t('market.subtitle')}</p>
             </div>
           )}
         </div>

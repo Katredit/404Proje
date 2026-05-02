@@ -1,12 +1,17 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text, Billboard, RoundedBox } from '@react-three/drei';
+import { Text, Billboard, useGLTF, Clone } from '@react-three/drei';
+import marketUrl from '../assets/market.glb';
+
+useGLTF.preload(marketUrl);
 
 function StoreBuilding({ store, onClick, isSelected, isHovered, onHover }) {
   const groupRef = useRef();
   const [localHover, setLocalHover] = useState(false);
 
   const hovered = isHovered || localHover;
+
+  const { scene } = useGLTF(marketUrl);
 
   useFrame((state) => {
     if (groupRef.current) {
@@ -46,9 +51,9 @@ function StoreBuilding({ store, onClick, isSelected, isHovered, onHover }) {
         document.body.style.cursor = 'default';
       }}
     >
-      {/* Gölge / zemin halkası */}
+      {/* Golge / zemin halkasi */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.99, 0]}>
-        <circleGeometry args={[1.6, 32]} />
+        <circleGeometry args={[1.6, 16]} />
         <meshBasicMaterial
           color={isSelected ? store.accentColor : '#000000'}
           transparent
@@ -56,89 +61,16 @@ function StoreBuilding({ store, onClick, isSelected, isHovered, onHover }) {
         />
       </mesh>
 
-      {/* Ana bina gövdesi */}
-      <RoundedBox
-        args={[2.4, 2.2, 2.4]}
-        radius={0.08}
-        smoothness={4}
-        position={[0, 0.1, 0]}
+      {/* market.glb modeli — Clone geometri/materyal paylasar, cok daha performansli */}
+      <Clone
+        object={scene}
+        scale={[2, 2, 2]}
+        position={[0, 0.75, 0]}
         castShadow
         receiveShadow
-      >
-        <meshStandardMaterial
-          color={hovered || isSelected ? store.accentColor : store.color}
-          roughness={0.45}
-          metalness={0.05}
-        />
-      </RoundedBox>
+      />
 
-      {/* Çatı - üçgen prizma */}
-      <mesh position={[0, 1.6, 0]} castShadow>
-        <coneGeometry args={[1.85, 1.2, 4]} />
-        <meshStandardMaterial
-          color={store.roofColor}
-          roughness={0.6}
-          metalness={0.0}
-        />
-      </mesh>
-
-      {/* Kapı */}
-      <mesh position={[0, -0.45, 1.22]}>
-        <boxGeometry args={[0.7, 1.2, 0.05]} />
-        <meshStandardMaterial color="#5D4037" roughness={0.8} />
-      </mesh>
-      {/* Kapı topu */}
-      <mesh position={[0.28, -0.45, 1.26]}>
-        <sphereGeometry args={[0.07, 8, 8]} />
-        <meshStandardMaterial color="#FFD700" metalness={0.9} roughness={0.1} />
-      </mesh>
-
-      {/* Sol pencere */}
-      <mesh position={[-0.75, 0.2, 1.22]}>
-        <boxGeometry args={[0.55, 0.55, 0.05]} />
-        <meshStandardMaterial
-          color="#AED6F1"
-          roughness={0.1}
-          metalness={0.1}
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-      {/* Sağ pencere */}
-      <mesh position={[0.75, 0.2, 1.22]}>
-        <boxGeometry args={[0.55, 0.55, 0.05]} />
-        <meshStandardMaterial
-          color="#AED6F1"
-          roughness={0.1}
-          metalness={0.1}
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-
-      {/* Pencere çerçeveleri */}
-      {[-0.75, 0.75].map((x, i) => (
-        <mesh key={i} position={[x, 0.2, 1.23]}>
-          <boxGeometry args={[0.63, 0.63, 0.03]} />
-          <meshStandardMaterial color="#FDFEFE" roughness={0.9} />
-        </mesh>
-      ))}
-
-      {/* Tabelası */}
-      <mesh position={[0, -0.1, 1.24]}>
-        <boxGeometry args={[2.0, 0.4, 0.04]} />
-        <meshStandardMaterial color="#FDFEFE" roughness={0.9} />
-      </mesh>
-
-      {/* Rozet (badge) - ön çatıya yakın */}
-      {isSelected && (
-        <mesh position={[0, 1.1, 1.22]}>
-          <boxGeometry args={[1.4, 0.28, 0.04]} />
-          <meshStandardMaterial color={store.accentColor} />
-        </mesh>
-      )}
-
-      {/* Bina üstü ışık efekti seçilince */}
+      {/* Secili iken renkli isik (sadece secili magaza — performans) */}
       {isSelected && (
         <pointLight
           position={[0, 2.5, 0]}
@@ -164,7 +96,7 @@ function StoreBuilding({ store, onClick, isSelected, isHovered, onHover }) {
         </Text>
       </Billboard>
 
-      {/* Hover durumunda rating göster */}
+      {/* Hover durumunda rating goster */}
       {(hovered || isSelected) && (
         <Billboard position={[0, 2.55, 0]}>
           <Text

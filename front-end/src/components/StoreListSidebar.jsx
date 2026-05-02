@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 const CAT_ICONS = {
   'Kilim': 'grid_view',
   'Seramik': 'dining',
@@ -16,11 +18,12 @@ function getCatIcon(category) {
 }
 
 function StoreListSidebar({ stores, selectedStore, onSelectStore, hoveredId, onHover }) {
+  const { t } = useTranslation();
   return (
     <div className="sidebar">
       <div className="sidebar__header">
-        <h2 className="sidebar__title">Mağazalar</h2>
-        <p className="sidebar__subtitle">Zanaatkar Koleksiyonu</p>
+        <h2 className="sidebar__title">{t('sidebar.title')}</h2>
+        <p className="sidebar__subtitle">{t('sidebar.subtitle')}</p>
       </div>
       <ul className="sidebar__list">
         {stores.map((store) => {
@@ -46,7 +49,7 @@ function StoreListSidebar({ stores, selectedStore, onSelectStore, hoveredId, onH
         })}
       </ul>
       <button className="sidebar__filter-btn">
-        <span className="ms" style={{fontSize:16}}>filter_list</span>Filtrele
+        <span className="ms" style={{fontSize:16}}>filter_list</span>{t('sidebar.filter')}
       </button>
     </div>
   );
