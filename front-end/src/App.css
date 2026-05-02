@@ -12,16 +12,17 @@
   --navbar-h: 60px;
   --sidebar-w: 260px;
   --panel-w: 320px;
-  --color-bg: #1a1410;
-  --color-surface: #252018;
-  --color-surface2: #2f2820;
-  --color-border: rgba(255,255,255,0.08);
-  --color-text: #f0e8d8;
-  --color-text-muted: #a89880;
-  --color-accent: #D4A054;
-  --color-accent2: #C0392B;
+  --color-bg: #faf8f5;
+  --color-surface: #ffffff;
+  --color-surface2: #f4f0ea;
+  --color-border: rgba(0,0,0,0.09);
+  --color-text: #1c1410;
+  --color-text-muted: #7a6855;
+  --color-accent: #C0392B;
+  --color-accent2: #D4A054;
   --radius: 12px;
-  --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.18);
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -37,9 +38,10 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: var(--navbar-h);
-  background: rgba(20,15,10,0.92);
+  background: var(--color-surface);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.07);
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -93,7 +95,7 @@ body {
 .navbar__link:hover,
 .navbar__link--active {
   color: var(--color-text);
-  background: rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.05);
 }
 
 .navbar__link--active {
@@ -123,7 +125,7 @@ body {
 }
 
 .navbar__btn--icon:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.06);
 }
 
 .navbar__btn--primary {
@@ -155,7 +157,7 @@ body {
   z-index: 50;
   width: 24px;
   height: 56px;
-  background: var(--color-surface2);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-left: none;
   border-radius: 0 8px 8px 0;
@@ -166,6 +168,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.06);
 }
 
 .sidebar-toggle--open {
@@ -173,7 +176,7 @@ body {
 }
 
 .sidebar-toggle:hover {
-  background: var(--color-surface);
+  background: var(--color-surface2);
   color: var(--color-text);
 }
 
@@ -238,7 +241,7 @@ body {
 }
 
 .sidebar__list::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.12);
   border-radius: 2px;
 }
 
@@ -254,11 +257,11 @@ body {
 
 .sidebar__item:hover,
 .sidebar__item--hovered {
-  background: rgba(255,255,255,0.04);
+  background: rgba(0,0,0,0.04);
 }
 
 .sidebar__item--active {
-  background: rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.05);
   border-left-color: var(--color-accent);
 }
 
@@ -312,9 +315,9 @@ body {
   backdrop-filter: blur(8px);
   padding: 6px 16px;
   border-radius: 20px;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255,255,255,0.12);
   font-size: 11px;
-  color: var(--color-text-muted);
+  color: rgba(255,255,255,0.8);
   white-space: nowrap;
   z-index: 10;
 }
@@ -359,7 +362,7 @@ body {
 }
 
 .panel-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.1);
   border-radius: 2px;
 }
 
@@ -372,7 +375,7 @@ body {
   position: absolute;
   top: 14px;
   right: 14px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.06);
   border: none;
   color: var(--color-text-muted);
   width: 28px;
@@ -387,7 +390,7 @@ body {
 }
 
 .store-panel__close:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.12);
   color: var(--color-text);
 }
 
@@ -455,7 +458,7 @@ body {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 16px;
-  background: rgba(255,255,255,0.04);
+  background: var(--color-surface2);
   border-radius: 8px;
   padding: 12px;
 }
@@ -530,12 +533,15 @@ body {
 }
 
 .store-panel__btn--secondary {
-  background: rgba(255,255,255,0.07);
+  background: var(--color-surface2);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
 }
 
 .store-panel__btn--secondary:hover {
-  background: rgba(255,255,255,0.12);
+  background: var(--color-surface2);
+  filter: brightness(0.96);
   color: var(--color-text);
 }
+
+/* Store Detail + Modal styles appended */

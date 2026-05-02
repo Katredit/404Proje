@@ -1,13 +1,90 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import MarketScene from './components/MarketScene';
 import StorePanel from './components/StorePanel';
 import StoreListSidebar from './components/StoreListSidebar';
+import StoreDetailPage from './pages/StoreDetailPage';
+import AIDesignPage from './pages/AIDesignPage';
+import SellerPage from './pages/SellerPage';
+import { stores as staticStores } from './data/stores';
 import './App.css';
+
+// Yeni satıcı için 3D pozisyon hesapla
+function autoPosition(index) {
+  const positions = [
+    [-4, 0, 4], [4, 0, 4], [-8, 0, 4], [8, 0, 4],
+    [-12, 0, -2], [12, 0, -2], [-12, 0, 4], [12, 0, 4],
+    [0, 0, 8], [-6, 0, 8], [6, 0, 8],
+  ];
+  return positions[index % positions.length] || [0, 0, index * 5];
+}
 
 function App() {
   const [selectedStore, setSelectedStore] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller'
+  const [visitingStore, setVisitingStore] = useState(null);
+
+  // Dinamik satıcılar: localStorage'dan yükle
+  const [dynamicStores, setDynamicStores] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kappadokya_sellers');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  // Tüm mağazalar = statik + dinamik
+  const allStores = [...staticStores, ...dynamicStores];
+
+  // Yeni satıcı ekle
+  const handleAddSeller = (sellerData) => {
+    const newStore = {
+      ...sellerData,
+      id: Date.now(),
+      rating: 5.0,
+      reviewCount: 0,
+      products: [],
+      badge: 'Yeni',
+      position: autoPosition(dynamicStores.length + staticStores.length),
+    };
+    const updated = [...dynamicStores, newStore];
+    setDynamicStores(updated);
+    localStorage.setItem('kappadokya_sellers', JSON.stringify(updated));
+    setActivePage('market');
+  };
+
+  // Mağaza sayfasında isek
+  if (visitingStore) {
+    return (
+      <div className="app">
+        <StoreDetailPage
+          store={visitingStore}
+          onBack={() => setVisitingStore(null)}
+        />
+      </div>
+    );
+  }
+
+  // Yapay Zeka Tasarım sayfası
+  if (activePage === 'ai') {
+    return (
+      <div className="app">
+        <AIDesignPage onBack={() => setActivePage('market')} />
+      </div>
+    );
+  }
+
+  // Satıcı Ol sayfası
+  if (activePage === 'seller') {
+    return (
+      <div className="app">
+        <SellerPage
+          onBack={() => setActivePage('market')}
+          onSubmit={handleAddSeller}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -20,10 +97,18 @@ function App() {
           </div>
         </div>
         <nav className="navbar__links">
-          <a href="#" className="navbar__link navbar__link--active">Çarşı</a>
-          <a href="#" className="navbar__link">Ürünler</a>
-          <a href="#" className="navbar__link">Yapay Zeka Tasarım</a>
-          <a href="#" className="navbar__link">Satıcı Ol</a>
+          <button
+            className={`navbar__link${activePage === 'market' ? ' navbar__link--active' : ''}`}
+            onClick={() => setActivePage('market')}
+          >Çarşı</button>
+          <button
+            className={`navbar__link${activePage === 'ai' ? ' navbar__link--active' : ''}`}
+            onClick={() => setActivePage('ai')}
+          >✨ Yapay Zeka Tasarım</button>
+          <button
+            className={`navbar__link${activePage === 'seller' ? ' navbar__link--active' : ''}`}
+            onClick={() => setActivePage('seller')}
+          >🏪 Satıcı Ol</button>
         </nav>
         <div className="navbar__actions">
           <button className="navbar__btn navbar__btn--icon">🔍</button>
@@ -43,6 +128,7 @@ function App() {
 
         <div className={`sidebar-wrapper${sidebarOpen ? ' sidebar-wrapper--open' : ''}`}>
           <StoreListSidebar
+            stores={allStores}
             selectedStore={selectedStore}
             onSelectStore={setSelectedStore}
             hoveredId={hoveredId}
@@ -52,6 +138,7 @@ function App() {
 
         <div className="canvas-wrapper">
           <MarketScene
+            stores={allStores}
             selectedStore={selectedStore}
             setSelectedStore={setSelectedStore}
             hoveredId={hoveredId}
@@ -72,7 +159,11 @@ function App() {
 
         {selectedStore && (
           <div className="panel-wrapper">
-            <StorePanel store={selectedStore} onClose={() => setSelectedStore(null)} />
+            <StorePanel
+              store={selectedStore}
+              onClose={() => setSelectedStore(null)}
+              onVisit={(s) => { setVisitingStore(s); setSelectedStore(null); }}
+            />
           </div>
         )}
       </main>

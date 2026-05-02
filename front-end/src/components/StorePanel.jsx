@@ -1,4 +1,4 @@
-function StorePanel({ store, onClose }) {
+function StorePanel({ store, onClose, onVisit }) {
   if (!store) return null;
 
   return (
@@ -46,13 +46,13 @@ function StorePanel({ store, onClose }) {
       <div className="store-panel__products">
         <h3 className="store-panel__products-title">Öne Çıkan Ürünler</h3>
         <ul className="store-panel__product-list">
-          {store.products.map((p, i) => (
-            <li key={i} className="store-panel__product-item">
+          {store.products.map((p) => (
+            <li key={p.id} className="store-panel__product-item">
               <span
                 className="store-panel__product-dot"
                 style={{ backgroundColor: store.accentColor }}
               />
-              {p}
+              {p.name}
             </li>
           ))}
         </ul>
@@ -62,6 +62,7 @@ function StorePanel({ store, onClose }) {
         <button
           className="store-panel__btn store-panel__btn--primary"
           style={{ backgroundColor: store.accentColor }}
+          onClick={() => onVisit && onVisit(store)}
         >
           Mağazayı Ziyaret Et
         </button>
