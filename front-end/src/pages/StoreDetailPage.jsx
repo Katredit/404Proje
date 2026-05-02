@@ -5,12 +5,14 @@ import { useTranslatedStore } from '../hooks/useTranslatedStore';
 import './StoreDetail.css';
 import { useCurrencyPrice } from '../hooks/useCurrencyPrice';
 import CurrencyRateBadge from '../components/CurrencyRateBadge';
+import { useCart } from '../context/CartContext';
 
 const CATEGORY_ICONS = { kilim: '🧶', ceramic: '🏺', other: '📦' };
 
 function ProductCard({ product, store, onView3D }) {
   const { t } = useTranslation();
   const { format } = useCurrencyPrice();
+  const { addItem } = useCart();
   const is3D = product.type === 'kilim' || product.type === 'ceramic';
 
   const previewStyle = product.colors
@@ -28,7 +30,7 @@ function ProductCard({ product, store, onView3D }) {
         )}
         <span className="pcard__icon">{CATEGORY_ICONS[product.type] || '📦'}</span>
         <div className="pcard__hover-overlay">
-          <button className="pcard__quick-btn">Hızlı Ekle</button>
+          <button className="pcard__quick-btn" onClick={() => addItem(product, store)}>Hızlı Ekle</button>
         </div>
       </div>
 
@@ -64,7 +66,7 @@ function ProductCard({ product, store, onView3D }) {
         ) : (
           <span />
         )}
-        <button className="pcard__btn pcard__btn--buy">
+        <button className="pcard__btn pcard__btn--buy" onClick={() => addItem(product, store)}>
           <span className="ms">shopping_cart</span> {t('storeDetail.addToCart')}
         </button>
       </div>
@@ -72,10 +74,11 @@ function ProductCard({ product, store, onView3D }) {
   );
 }
 
-function StoreDetailPage({ store: rawStore, onBack }) {
+function StoreDetailPage({ store: rawStore, onBack, onCheckout }) {
   const { t } = useTranslation();
   const store = useTranslatedStore(rawStore);
   const [activeProduct, setActiveProduct] = useState(null);
+  const { totalCount, setCartOpen } = useCart();
 
   if (!store) return null;
 
@@ -97,7 +100,10 @@ function StoreDetailPage({ store: rawStore, onBack }) {
           </div>
           <div className="sd-navbar__actions">
             <CurrencyRateBadge />
-            <button className="sd-navbar__icon-btn"><span className="ms">shopping_basket</span></button>
+            <button className="sd-navbar__icon-btn sd-navbar__cart-btn" onClick={() => setCartOpen(true)}>
+              <span className="ms">shopping_basket</span>
+              {totalCount > 0 && <span className="sd-navbar__cart-count">{totalCount}</span>}
+            </button>
             <button className="sd-navbar__icon-btn"><span className="ms">person</span></button>
           </div>
         </header>

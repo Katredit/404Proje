@@ -1,0 +1,221 @@
+.cart-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 900;
+  animation: fadeIn 0.2s ease;
+}
+
+.cart-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  max-width: 95vw;
+  background: #fff;
+  z-index: 901;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.18);
+  animation: slideInRight 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cart-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0e8e0;
+  background: linear-gradient(135deg, #fff8f3 0%, #fff 100%);
+}
+
+.cart-sidebar__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #3b2a1a;
+  margin: 0;
+}
+
+.cart-sidebar__title .ms {
+  color: #c97c3a;
+  font-size: 1.4rem;
+}
+
+.cart-sidebar__count {
+  background: #c97c3a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 4px;
+}
+
+.cart-sidebar__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #8a7060;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+}
+.cart-sidebar__close:hover { background: #f5ede4; }
+
+.cart-sidebar__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #b09888;
+  padding: 40px;
+  text-align: center;
+}
+.cart-sidebar__empty-icon {
+  font-size: 3.5rem;
+  color: #ddd0c0;
+}
+
+.cart-sidebar__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+  list-style: none;
+  margin: 0;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-bottom: 1px solid #f5ede4;
+  transition: background 0.15s;
+}
+.cart-item:hover { background: #fdf8f4; }
+
+.cart-item__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cart-item__store {
+  font-size: 0.72rem;
+  color: #a07858;
+  font-weight: 500;
+}
+.cart-item__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #3b2a1a;
+}
+.cart-item__price {
+  font-size: 0.88rem;
+  color: #c97c3a;
+  font-weight: 600;
+}
+
+.cart-item__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cart-item__qty-btn {
+  background: #f5ede4;
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a3e2b;
+  transition: background 0.15s;
+}
+.cart-item__qty-btn:hover { background: #e8d8c8; }
+.cart-item__qty-btn .ms { font-size: 1rem; }
+
+.cart-item__qty {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 700;
+  color: #3b2a1a;
+}
+
+.cart-item__remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #e07060;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+  margin-left: 4px;
+}
+.cart-item__remove:hover { background: #fde8e8; }
+.cart-item__remove .ms { font-size: 1.1rem; }
+
+.cart-sidebar__footer {
+  padding: 20px 24px;
+  border-top: 1px solid #f0e8e0;
+  background: #fff8f3;
+}
+
+.cart-sidebar__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+  color: #3b2a1a;
+}
+.cart-sidebar__total strong {
+  font-size: 1.25rem;
+  color: #c97c3a;
+  font-weight: 800;
+}
+
+.cart-sidebar__checkout-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #c97c3a 0%, #a85e28 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(201, 124, 58, 0.3);
+}
+.cart-sidebar__checkout-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}

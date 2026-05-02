@@ -8,19 +8,23 @@ import AIDesignPage from './pages/AIDesignPage';
 import SellerPage from './pages/SellerPage';
 import SellerDashboard from './pages/SellerDashboard';
 import AuthPage from './pages/AuthPage';
+import CheckoutPage from './pages/CheckoutPage';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import CurrencyRateBadge from './components/CurrencyRateBadge';
+import CartSidebar from './components/CartSidebar';
 import { stores as staticStores, positions as storePositions } from './data/stores';
 import { useAuth } from './context/AuthContext';
+import { useCart } from './context/CartContext';
 import './App.css';
 
 function App() {
   const { t } = useTranslation();
   const { user, loading: authLoading, logout } = useAuth();
+  const { totalCount, setCartOpen } = useCart();
   const [selectedStore, setSelectedStore] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller' | 'dashboard'
+  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller' | 'dashboard' | 'checkout'
   const [visitingStore, setVisitingStore] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
 
@@ -59,7 +63,9 @@ function App() {
         <StoreDetailPage
           store={visitingStore}
           onBack={() => setVisitingStore(null)}
+          onCheckout={() => setActivePage('checkout')}
         />
+        <CartSidebar onCheckout={() => { setVisitingStore(null); setActivePage('checkout'); }} />
       </div>
     );
   }
@@ -101,18 +107,21 @@ function App() {
                 onClick={() => setActivePage('dashboard')}
               >
                 <span className="ms" style={{ fontSize: 16, verticalAlign: 'middle' }}>storefront</span>{' '}
-                Dükkanım
+                {t('nav.myStore')}
               </button>
             )}
           </nav>
           <div className="navbar__actions">
             <button className="navbar__btn navbar__btn--icon"><span className="ms">search</span></button>
-            <button className="navbar__btn navbar__btn--icon"><span className="ms">shopping_basket</span></button>
+            <button className="navbar__btn navbar__btn--icon navbar__cart-btn" onClick={() => setCartOpen(true)}>
+              <span className="ms">shopping_basket</span>
+              {totalCount > 0 && <span className="navbar__cart-count">{totalCount}</span>}
+            </button>
 
             {authLoading ? null : user ? (
               <div className="navbar__user">
                 <span className="navbar__user-name">{user.name}</span>
-                <button className="navbar__btn navbar__btn--outline" onClick={logout}>Çıkış</button>
+                <button className="navbar__btn navbar__btn--outline" onClick={logout}>{t('nav.logout')}</button>
               </div>
             ) : (
               <button className="navbar__btn navbar__btn--primary" onClick={() => setShowAuth(true)}>
