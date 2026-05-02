@@ -11,6 +11,7 @@ import { Suspense, useRef } from 'react';
 import StoreBuilding from './StoreBuilding';
 import { stores } from '../data/stores';
 import GroundDecor from './GroundDecor';
+import GroundModel from './GroundModel';
 
 function Scene({ selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
   return (
@@ -41,11 +42,8 @@ function Scene({ selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
       />
       <Stars radius={120} depth={50} count={1500} factor={3} fade speed={0.8} />
 
-      {/* Zemin */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
-        <planeGeometry args={[80, 80]} />
-        <meshStandardMaterial color="#C8B89A" roughness={0.95} metalness={0} />
-      </mesh>
+      {/* GLB Zemin modeli */}
+      <GroundModel />
 
       {/* Grid çizgisi */}
       <Grid
