@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { tcmbKurCek, cacheTemizle, tcmbKurGecmisi } = require("../services/dovizService");
 
+const GECERLI_PARA_BIRIMLERI = ["usd", "eur", "gbp", "jpy", "rub", "cny", "krw"];
+
 // ─── GET /api/doviz/guncel ────────────────────────────────────
 // TCMB EVDS'ten güncel USD, EUR, GBP kurlarını döner
 // Her 5 dakikada bir otomatik yenilenir (cache)
@@ -40,30 +42,34 @@ router.get("/haftalik", async (req, res) => {
 // Fiyatı TL'den istenilen dövize çevirir
 // Sorgu parametreleri:
 //   miktar  : number – TL miktarı (ör: 5000)
-//   hedef   : string – usd | eur | gbp (default: eur)
+//   hedef   : string – usd | eur | gbp | jpy | rub | cny | krw (default: usd)
 router.get("/cevirici", async (req, res) => {
   try {
     const miktar = parseFloat(req.query.miktar);
-    const hedef = (req.query.hedef || "eur").toLowerCase();
+    const hedef = (req.query.hedef || "usd").toLowerCase();
 
     if (isNaN(miktar) || miktar <= 0) {
       return res.status(400).json({ hata: '"miktar" pozitif bir sayı olmalıdır.' });
     }
-    if (!["usd", "eur", "gbp"].includes(hedef)) {
+    if (!GECERLI_PARA_BIRIMLERI.includes(hedef)) {
       return res.status(400).json({
         hata: `Geçersiz hedef para birimi: "${hedef}"`,
-        gecerliDegerler: ["usd", "eur", "gbp"],
+        gecerliDegerler: GECERLI_PARA_BIRIMLERI,
       });
     }
 
     const kur = await tcmbKurCek();
     const kurDegeri = kur[hedef];
+
+    if (!kurDegeri)
+      return res.status(503).json({ hata: `${hedef.toUpperCase()} kuru şu an mevcut değil.` });
+
     const sonuc = miktar / kurDegeri;
 
     res.json({
       girdi: { miktar, paraBirimi: "TRY" },
       cikti: {
-        miktar: parseFloat(sonuc.toFixed(2)),
+        miktar: parseFloat(sonuc.toFixed(4)),
         paraBirimi: hedef.toUpperCase(),
       },
       kullanilanKur: {
@@ -75,9 +81,13 @@ router.get("/cevirici", async (req, res) => {
       // Fiyatlandırma kararı: karlılık göstergesi (bonus zinciri için)
       isKarari: {
         tl: miktar,
-        usd: parseFloat((miktar / kur.usd).toFixed(2)),
-        eur: parseFloat((miktar / kur.eur).toFixed(2)),
-        gbp: parseFloat((miktar / kur.gbp).toFixed(2)),
+        usd: kur.usd ? parseFloat((miktar / kur.usd).toFixed(2)) : null,
+        eur: kur.eur ? parseFloat((miktar / kur.eur).toFixed(2)) : null,
+        gbp: kur.gbp ? parseFloat((miktar / kur.gbp).toFixed(2)) : null,
+        jpy: kur.jpy ? parseFloat((miktar / kur.jpy).toFixed(0)) : null,
+        rub: kur.rub ? parseFloat((miktar / kur.rub).toFixed(2)) : null,
+        cny: kur.cny ? parseFloat((miktar / kur.cny).toFixed(2)) : null,
+        krw: kur.krw ? parseFloat((miktar / kur.krw).toFixed(0)) : null,
         aciklama: "Tüm para birimlerinde karşılık",
       },
     });

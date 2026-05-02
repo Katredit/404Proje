@@ -3,11 +3,14 @@ import { useTranslation } from 'react-i18next';
 import Product3DModal from '../components/Product3DModal';
 import { useTranslatedStore } from '../hooks/useTranslatedStore';
 import './StoreDetail.css';
+import { useCurrencyPrice } from '../hooks/useCurrencyPrice';
+import CurrencyRateBadge from '../components/CurrencyRateBadge';
 
 const CATEGORY_ICONS = { kilim: '🧶', ceramic: '🏺', other: '📦' };
 
 function ProductCard({ product, store, onView3D }) {
   const { t } = useTranslation();
+  const { format } = useCurrencyPrice();
   const is3D = product.type === 'kilim' || product.type === 'ceramic';
 
   const previewStyle = product.colors
@@ -33,7 +36,7 @@ function ProductCard({ product, store, onView3D }) {
       <div className="pcard__body">
         <div className="pcard__top-row">
           <h3 className="pcard__name">{product.name}</h3>
-          <span className="pcard__price">₺{product.price.toLocaleString('tr-TR')}</span>
+          <span className="pcard__price">{format(product.price)}</span>
         </div>
         <p className="pcard__desc">{product.description}</p>
         <div className="pcard__tags">
@@ -93,6 +96,7 @@ function StoreDetailPage({ store: rawStore, onBack }) {
             </div>
           </div>
           <div className="sd-navbar__actions">
+            <CurrencyRateBadge />
             <button className="sd-navbar__icon-btn"><span className="ms">shopping_basket</span></button>
             <button className="sd-navbar__icon-btn"><span className="ms">person</span></button>
           </div>
