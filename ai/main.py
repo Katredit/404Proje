@@ -1,71 +1,84 @@
 # ═══════════════════════════════════════════════════════════════════
-# KapadokyaCraft v3 — DÜZELTİLMİŞ KOD
-# Düzeltmeler:
-#   1. Prompt kontrolü: kullanıcı ne isterse onu üretiyor
-#   2. Fotoğraf sarma: maske + blend tamamen yeniden yazıldı
-#   3. Arka plan temizleme düzeltildi
+# KapadokyaCraft v4 — TAM DÜZELTİLMİŞ KOD
+# Değişiklikler:
+#   1. rembg ile gerçek arka plan silme
+#   2. Kilim için yatay dikdörtgen (768x512)
+#   3. Düzenleme: kullanıcı geri bildirimi → AI düzenler (hata düzeltildi)
+#   4. Kilim promptları iyileştirildi (düz görünüm, doğru şekil)
+#   5. Desen sarma iyileştirildi
 # ═══════════════════════════════════════════════════════════════════
 
 import subprocess, sys
+
 def pip(p):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", p])
 
-pip("groq"); pip("flask"); pip("flask-cors"); pip("pillow"); pip("numpy"); pip("requests")
+pip("groq")
+pip("flask")
+pip("flask-cors")
+pip("pillow")
+pip("numpy")
+pip("requests")
+pip("rembg")
 
-<<<<<<< HEAD
 import os, json, time, base64, threading
-=======
-import os
-import tempfile
-os.environ["GROQ_API_KEY"] = "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"
-os.environ["HF_TOKEN"] = "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"
-
-TMPDIR = tempfile.gettempdir()
-
-import json
-import requests
-import urllib.parse
->>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
 import numpy as np
 from io import BytesIO
 from groq import Groq
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance, ImageChops
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests as req
 import urllib.parse
 
+# rembg — arka plan silme
+try:
+    from rembg import remove as rembg_remove
+    REMBG_MEVCUT = True
+    print("✅ rembg yüklendi")
+except ImportError:
+    REMBG_MEVCUT = False
+    print("⚠️ rembg yüklenemedi, renk bazlı yöntem kullanılacak")
+
 # ── API ANAHTARLARI ──────────────────────────────────────────────
-GROQ_API_KEY = "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" # ← kendi keyini yaz
-HF_TOKEN     = "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"   # ← kendi keyini yaz
+GROQ_API_KEY = "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"
+HF_TOKEN     = "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"
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 app = Flask(__name__)
 CORS(app)
 
-# ── ÜRÜN PROMPT'LARI (sadece şablon için, kullanıcı istediğinde override edilir) ──
-URUN_SABLONLARI = {
-    "vazo":   "plain white ceramic tall vase, centered on solid black background, no shadows, studio lighting, photorealistic",
-    "tabak":  "plain white ceramic plate, centered on solid black background, no shadows, studio lighting, photorealistic",
-    "bardak": "plain white ceramic mug with handle, centered on solid black background, no shadows, studio lighting, photorealistic",
-    "comlek": "plain white clay pot with lid, centered on solid black background, no shadows, studio lighting, photorealistic",
-    "kilim":  "plain beige kilim rug flat lay aerial top view, centered on solid black background, soft lighting, photorealistic",
+# ── ÜRÜN BOYUTLARI ───────────────────────────────────────────────
+# Kilim yatay dikdörtgen, diğerleri kare
+URUN_BOYUTLARI = {
+    "vazo":   (512, 512),
+    "tabak":  (512, 512),
+    "bardak": (512, 512),
+    "comlek": (512, 512),
+    "kilim":  (768, 512),   # ← yatay dikdörtgen
 }
 
-# Varsayılan zengin promptlar (kullanıcı hiçbir desen belirtmezse)
+# ── ŞABLON PROMPTLAR (fotoğraf modu için sade ürün) ──────────────
+URUN_SABLONLARI = {
+    "vazo":   "plain white ceramic tall vase, centered on pure white background, no shadows, studio photography",
+    "tabak":  "plain white ceramic plate, centered on pure white background, no shadows, studio photography",
+    "bardak": "plain white ceramic mug with handle, centered on pure white background, no shadows, studio photography",
+    "comlek": "plain white clay pot with lid, centered on pure white background, no shadows, studio photography",
+    "kilim":  "plain beige kilim rug, flat lay, top-down aerial view, rectangular shape, pure white background, studio photography",
+}
+
+# ── VARSAYILAN DESEN PROMPTLARI ──────────────────────────────────
 URUN_VARSAYILAN_DESEN = {
     "vazo":   "handcrafted Cappadocia terracotta tall vase, intricate hand-painted Anatolian geometric patterns, vibrant red blue white, folk art, Turkish pottery, white background, photorealistic 8K",
     "tabak":  "handcrafted Cappadocia ceramic plate, Iznik floral tulip patterns, cobalt blue red white glaze, Ottoman motifs, white background, photorealistic 8K",
     "bardak": "handcrafted Cappadocia ceramic mug, hand-painted Anatolian folk patterns, terracotta warm colors, white background, photorealistic 8K",
     "comlek": "handcrafted Cappadocia clay pot with lid, rustic terracotta geometric bands, Anatolian pottery, white background, photorealistic 8K",
-    "kilim":  "traditional Turkish kilim rug flat lay aerial view, bold geometric diamond medallion patterns, handwoven wool, rich deep red burgundy ivory black, Anatolian tribal weaving, white background, photorealistic 8K",
+    "kilim":  "traditional Turkish kilim rug, flat lay top-down aerial view, rectangular shape, bold geometric diamond medallion patterns, handwoven wool, rich deep red burgundy ivory black, Anatolian tribal weaving, white background, photorealistic 8K, wide format",
 }
 
 
 # ════════════════════════════════════════════════════════
 # 1. İSTEK ANALİZİ
-#    ÖNEMLİ: Artık desen = kullanıcının tam isteği,
-#    sistem kendi zevkini katmıyor
 # ════════════════════════════════════════════════════════
 def istek_analiz_et(kullanici_istegi):
     yanit = groq_client.chat.completions.create(
@@ -81,7 +94,7 @@ KURALLAR:
 - Kullanıcı "sadece turkuaz kilim" diyorsa desen = "plain solid turquoise color, no patterns, minimal"
 - Kullanıcı "çiçekli vazo" diyorsa desen = "floral patterns on vase"
 - Kullanıcı detaylı anlatırsa o detayları İngilizceye çevir
-- "kullanici_sadece_renk_istedi" = true ise gereksiz desen ekleme
+- "sade_mi" = true ise gereksiz desen ekleme
 
 {
   "metin": "ürüne yazılacak metin varsa yaz, yoksa null",
@@ -89,7 +102,7 @@ KURALLAR:
   "urun_tipi": "vazo/tabak/bardak/comlek/kilim",
   "kultur": "kültür varsa İngilizce, yoksa null",
   "desen": "SADECE kullanıcının istediği tasarım, İngilizce, KISA VE NET",
-  "sade_mi": true/false  // kullanıcı sade/düz/minimal bir şey istediyse true
+  "sade_mi": true
 }
 
 Örnekler:
@@ -107,8 +120,15 @@ Sadece JSON yaz."""
 
 # ════════════════════════════════════════════════════════
 # 2. GÖRSEL ÜRETİMİ
+#    Kilim için farklı boyut kullanır
 # ════════════════════════════════════════════════════════
-def gorsel_uret(prompt, genislik=512, yukseklik=512):
+def gorsel_uret(prompt, urun_tipi="vazo"):
+    genislik, yukseklik = URUN_BOYUTLARI.get(urun_tipi, (512, 512))
+
+    # Kilim promptuna her zaman flat-lay ve rectangular ekle
+    if urun_tipi == "kilim" and "flat lay" not in prompt.lower():
+        prompt = prompt + ", flat lay top-down view, rectangular rug, wide format"
+
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
     payload = {
@@ -116,9 +136,10 @@ def gorsel_uret(prompt, genislik=512, yukseklik=512):
         "parameters": {"width": genislik, "height": yukseklik},
         "options": {"wait_for_model": True}
     }
+
     for deneme in range(3):
         try:
-            print(f"  Görsel üretiliyor... (deneme {deneme+1}/3)")
+            print(f"  Görsel üretiliyor... ({genislik}×{yukseklik}) deneme {deneme+1}/3")
             r = req.post(url, headers=headers, json=payload, timeout=90)
             if r.status_code == 200 and "image" in r.headers.get("content-type", ""):
                 img = Image.open(BytesIO(r.content)).convert("RGB")
@@ -152,21 +173,19 @@ def gorsel_uret(prompt, genislik=512, yukseklik=512):
     except Exception as e:
         print(f"  ⚠️ Yedek de başarısız: {e}")
 
-    # Son çare: grid görsel
-    print("  ❌ Tüm kaynaklar başarısız, boş görsel döndürülüyor")
+    # Son çare: boş görsel
+    print("  ❌ Tüm kaynaklar başarısız")
     fb = Image.new("RGB", (genislik, yukseklik), (245, 235, 220))
     d = ImageDraw.Draw(fb)
     for i in range(0, genislik, 40):
-        d.line([(i,0),(i,yukseklik)], fill=(210,195,170), width=1)
+        d.line([(i, 0), (i, yukseklik)], fill=(210, 195, 170), width=1)
     for j in range(0, yukseklik, 40):
-        d.line([(0,j),(genislik,j)], fill=(210,195,170), width=1)
+        d.line([(0, j), (genislik, j)], fill=(210, 195, 170), width=1)
     return fb
 
 
 # ════════════════════════════════════════════════════════
 # 3. PROMPT OLUŞTURMA
-#    Kullanıcının isteğine göre prompt hazırlar.
-#    Sade isteklerde gereksiz detay EKLEME.
 # ════════════════════════════════════════════════════════
 def prompt_olustur(analiz):
     urun_tipi = analiz.get("urun_tipi", "vazo")
@@ -177,21 +196,22 @@ def prompt_olustur(analiz):
     kultur_eki = f"{kultur} style, " if kultur else ""
 
     if sade_mi:
-        # Sade istek: sadece kullanıcının dediği + beyaz arka plan
         urun_isimleri = {
-            "vazo": "ceramic vase", "tabak": "ceramic plate",
-            "bardak": "ceramic mug", "comlek": "clay pot", "kilim": "kilim rug flat lay"
+            "vazo":   "ceramic vase",
+            "tabak":  "ceramic plate",
+            "bardak": "ceramic mug",
+            "comlek": "clay pot",
+            "kilim":  "kilim rug flat lay top-down view rectangular",
         }
         urun_ismi = urun_isimleri.get(urun_tipi, "ceramic product")
-        prompt = f"{desen} {urun_ismi}, {kultur_eki}plain background, studio lighting, photorealistic 8K"
+        prompt = f"{desen} {urun_ismi}, {kultur_eki}plain white background, studio lighting, photorealistic 8K"
     else:
-        # Detaylı istek: kullanıcının isteği + ürün bağlamı
         urun_baglam = {
             "vazo":   "handcrafted ceramic tall vase, white background, photorealistic 8K",
             "tabak":  "handcrafted ceramic plate, white background, photorealistic 8K",
             "bardak": "handcrafted ceramic mug, white background, photorealistic 8K",
             "comlek": "handcrafted clay pot with lid, white background, photorealistic 8K",
-            "kilim":  "traditional kilim rug flat lay aerial view, white background, photorealistic 8K",
+            "kilim":  "traditional kilim rug flat lay top-down aerial view, rectangular shape, white background, photorealistic 8K",
         }
         prompt = f"{desen}, {kultur_eki}{urun_baglam.get(urun_tipi, '')}"
 
@@ -199,109 +219,135 @@ def prompt_olustur(analiz):
 
 
 # ════════════════════════════════════════════════════════
-# 4. MASKE
-#    Düzeltme 1: Gölge kalıntısı → eşik biraz daha agresif
-#    Düzeltme 2: Kenar yumuşatma daha az → kesik alt sorunu azalır
+# 4. ARKA PLAN SİLME
+#    Önce rembg dene, olmazsa renk bazlı yöntem
 # ════════════════════════════════════════════════════════
-def vazo_maskesi_olustur(vazo_img):
-    rgb  = vazo_img.convert("RGB")
+def arkaplan_sil(img):
+    """
+    Görüntüden arka planı siler, RGBA döndürür.
+    Önce rembg (AI tabanlı, çok daha iyi), olmazsa renk bazlı.
+    """
+    if REMBG_MEVCUT:
+        try:
+            print("  🧹 rembg ile arka plan siliniyor...")
+            buf = BytesIO()
+            img.save(buf, format="PNG")
+            buf.seek(0)
+            sonuc_bytes = rembg_remove(buf.read())
+            sonuc = Image.open(BytesIO(sonuc_bytes)).convert("RGBA")
+            # Kontrol: alfa kanalı var mı?
+            alfa = np.array(sonuc)[:, :, 3]
+            if alfa.mean() > 5:
+                print(f"  ✅ rembg başarılı (ortalama alfa: {alfa.mean():.0f})")
+                return sonuc
+            print("  ⚠️ rembg alfa boş, renk bazlı yönteme geçiliyor")
+        except Exception as e:
+            print(f"  ⚠️ rembg hatası: {e}, renk bazlı yönteme geçiliyor")
+
+    # Yedek: renk bazlı maske
+    print("  🎨 Renk bazlı arka plan silme...")
+    return _renk_bazli_arkaplan_sil(img)
+
+
+def _renk_bazli_arkaplan_sil(img):
+    """Köşe rengi örnekleyerek arka planı RGBA'ya çevirir."""
+    rgb  = img.convert("RGB")
     arr  = np.array(rgb, dtype=np.float32)
     h, w = arr.shape[:2]
 
-    # Köşe + kenar ortası piksellerinden arka plan rengini bul
     koseler = np.array([
         arr[0, 0], arr[0, w-1], arr[h-1, 0], arr[h-1, w-1],
         arr[0, w//2], arr[h//2, 0], arr[h//2, w-1], arr[h-1, w//2],
         arr[2, 2], arr[2, w-3], arr[h-3, 2], arr[h-3, w-3],
-        # Alt kenar ortası — gölgenin tam yerinden örnekle
         arr[h-1, w//3], arr[h-1, 2*w//3],
-        arr[h-2, w//4], arr[h-2, 3*w//4],
     ])
     bg = np.median(koseler, axis=0)
     print(f"  Arka plan rengi: R={bg[0]:.0f} G={bg[1]:.0f} B={bg[2]:.0f}")
 
-    r, g, b = arr[:,:,0], arr[:,:,1], arr[:,:,2]
-    mesafe = np.sqrt((r-bg[0])**2 + (g-bg[1])**2 + (b-bg[2])**2)
-
-    # Eşiği biraz yüksek tut → gölge kalıntıları da temizlenir
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    mesafe = np.sqrt((r - bg[0])**2 + (g - bg[1])**2 + (b - bg[2])**2)
     esik = max(40, np.percentile(mesafe, 18))
-    print(f"  Maske eşiği: {esik:.1f}")
 
-    maske = np.where(mesafe < esik, 0, 255).astype(np.uint8)
-    m = Image.fromarray(maske, "L")
+    alfa_arr = np.where(mesafe < esik, 0, 255).astype(np.uint8)
+    alfa_img = Image.fromarray(alfa_arr, "L")
+    alfa_img = alfa_img.filter(ImageFilter.MaxFilter(9))
+    alfa_img = alfa_img.filter(ImageFilter.MinFilter(5))
+    alfa_img = alfa_img.filter(ImageFilter.GaussianBlur(radius=2))
 
-    # Delikler kapat, kenarı hafif içe çek, az yumuşat
-    m = m.filter(ImageFilter.MaxFilter(9))
-    m = m.filter(ImageFilter.MinFilter(5))
-    m = m.filter(ImageFilter.GaussianBlur(radius=2))  # daha az blur → alt kenar kesilmez
-
-    return m
+    rgba = rgb.convert("RGBA")
+    rgba.putalpha(alfa_img)
+    return rgba
 
 
 # ════════════════════════════════════════════════════════
-# 5. FOTOĞRAF SARMA
-#    Düzeltme 1: Görüntü kırpması → padding ekle, vazo sığsın
-#    Düzeltme 2: Renk ezilmesi → Brightness daha az, Soft Light blend
-#    Düzeltme 3: Gölge → maske eşiği yükseltildi (yukarıda)
+# 5. FOTOĞRAF SARMA (yeniden yazıldı)
+#    rembg kullanarak çok daha temiz maske alır
 # ════════════════════════════════════════════════════════
-def deseni_vazoya_sar(vazo_img, desen_img, opaklık=0.72):
-    # ── Düzeltme 1: Vazo'yu %10 padding ile küçült → alt kenar kesilmez ──
-    w, h = vazo_img.size
-    pad = int(h * 0.08)  # alt + sağ/sol için padding
-    yeni_h = h - pad
-    yeni_w = w - pad
+def deseni_urune_sar(urun_img, desen_img, urun_tipi="vazo", opaklık=0.70):
+    """
+    Ürün görselini al, arka planını sil (rembg), deseni alt katmana ekle.
+    """
+    w, h = urun_img.size
 
-    # Vazoyu küçült ve ortala
-    vazo_kucuk = vazo_img.convert("RGB").resize((yeni_w, yeni_h), Image.LANCZOS)
-    vazo_rgb   = Image.new("RGB", (w, h), (0, 0, 0))  # siyah arka plan
-    offset_x   = (w - yeni_w) // 2
-    offset_y   = (h - yeni_h) // 2
-    vazo_rgb.paste(vazo_kucuk, (offset_x, offset_y))
+    # ── 1. Ürün arka planını sil → RGBA ──
+    print("  Ürün arka planı siliniyor...")
+    urun_rgba = arkaplan_sil(urun_img.convert("RGB"))
+    urun_rgba = urun_rgba.resize((w, h), Image.LANCZOS)
 
-    # Maske
-    maske     = vazo_maskesi_olustur(vazo_rgb)
-    maske_arr = np.array(maske)
+    # ── 2. Alfa kanalından bounding box bul ──
+    alfa = np.array(urun_rgba)[:, :, 3]
+    satir_var = np.any(alfa > 64, axis=1)
+    sutun_var = np.any(alfa > 64, axis=0)
 
-    # Ürün bounding box
-    satir_var = np.any(maske_arr > 128, axis=1)
-    sutun_var = np.any(maske_arr > 128, axis=0)
-    if not satir_var.any() or not sutun_var.any():
-        print("  ⚠️ Maske boş! Tam boyut kullanılıyor.")
-        y1, y2, x1, x2 = 0, h, 0, w
-    else:
+    if satir_var.any() and sutun_var.any():
         y1, y2 = np.where(satir_var)[0][[0, -1]]
         x1, x2 = np.where(sutun_var)[0][[0, -1]]
+    else:
+        y1, y2, x1, x2 = 0, h, 0, w
 
     urun_w = max(x2 - x1, 1)
     urun_h = max(y2 - y1, 1)
-    print(f"  Ürün bölgesi: {urun_w}×{urun_h}px  offset=({x1},{y1})")
+    print(f"  Ürün bölgesi: {urun_w}×{urun_h} offset=({x1},{y1})")
 
-    # Deseni ürün kutusuna sığdır
+    # ── 3. Deseni ürün boyutuna sığdır ──
     desen_kucuk = desen_img.convert("RGB").resize((urun_w, urun_h), Image.LANCZOS)
-    desen_tam   = Image.new("RGB", (w, h), (128, 128, 128))
+    desen_tam   = Image.new("RGB", (w, h), (200, 200, 200))
     desen_tam.paste(desen_kucuk, (x1, y1))
 
-    # ── Düzeltme 2: Soft-Light tarzı blend — renkleri ezmez ──
-    vazo_gray     = vazo_rgb.convert("L")
-    vazo_gray_arr = np.array(vazo_gray, dtype=np.float32) / 255.0  # 0-1
+    # ── 4. Soft-light blend: desen + ürün aydınlık haritası ──
+    urun_gray     = urun_rgba.convert("L")
+    vazo_arr      = np.array(urun_gray, dtype=np.float32) / 255.0
+    desen_arr     = np.array(desen_tam, dtype=np.float32) / 255.0
 
-    desen_arr = np.array(desen_tam, dtype=np.float32) / 255.0  # 0-1
-
-    # Soft light formülü: karanlık yerleri koyulaştır, açık yerleri aydınlat
-    # out = desen * (vazo_gray + 0.5) — basit ama etkili
-    karisim = np.clip(desen_arr * (vazo_gray_arr[:,:,None] * 1.6 + 0.3), 0, 1)
+    karisim = np.clip(desen_arr * (vazo_arr[:, :, None] * 1.5 + 0.35), 0, 1)
     blended = Image.fromarray((karisim * 255).astype(np.uint8), "RGB")
-
-    # Orijinal desenle hafif karıştır (renk korunumu için)
     blended = Image.blend(desen_tam, blended, opaklık)
-    blended = ImageEnhance.Color(blended).enhance(1.2)    # rengi biraz canlı tut
+    blended = ImageEnhance.Color(blended).enhance(1.15)
     blended = ImageEnhance.Contrast(blended).enhance(1.1)
 
-    # Maske uygula → dışı beyaz
-    beyaz = Image.new("RGB", (w, h), (255, 255, 255))
-    sonuc = Image.composite(blended, beyaz, maske)
+    # ── 5. Beyaz arka plan üstüne: önce desen, sonra ürün alfa maskesi ──
+    beyaz = Image.new("RGBA", (w, h), (255, 255, 255, 255))
 
-    return sonuc
+    # Desen katmanı (ürünün şekline göre maskelenmiş)
+    desen_rgba = blended.convert("RGBA")
+    desen_rgba.putalpha(Image.fromarray(alfa, "L"))
+
+    # Beyaza deseni yapıştır
+    beyaz.paste(desen_rgba, (0, 0), desen_rgba)
+
+    # Ürünün orijinal kenar çizgilerini/dokusunu hafifçe üstüne bindir
+    urun_overlay = urun_rgba.copy()
+    # Sadece kenar detayları için hafif overlay
+    urun_arr_rgb = np.array(urun_rgba.convert("RGB"), dtype=np.float32) / 255.0
+    # Gray değeri 0.85 üstü = açık alan (arka plan kısmı) → atla
+    sobel_arr = np.array(urun_gray, dtype=np.float32) / 255.0
+    kenar_alfa = np.clip((1.0 - sobel_arr) * np.array(alfa, dtype=np.float32) / 255.0 * 180, 0, 120).astype(np.uint8)
+    urun_karartma = Image.fromarray(kenar_alfa, "L")
+    karartma_katmani = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    karartma_katmani.putalpha(urun_karartma)
+    beyaz = Image.alpha_composite(beyaz, karartma_katmani)
+
+    return beyaz.convert("RGB")
 
 
 # ════════════════════════════════════════════════════════
@@ -316,36 +362,46 @@ def metni_ekle(gorsel, metin, konum="orta"):
         "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     ]:
-        try: font = ImageFont.truetype(yol, font_size); break
-        except: continue
+        try:
+            font = ImageFont.truetype(yol, font_size)
+            break
+        except:
+            continue
     if not font:
         font = ImageFont.load_default()
+
     dummy = ImageDraw.Draw(img)
     try:
         bbox = dummy.textbbox((0, 0), metin, font=font)
-        tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
     except:
-        tw, th = len(metin)*20, 40
+        tw, th = len(metin) * 20, 40
+
     konumlar = {
-        "orta":    ((w-tw)//2, (h-th)//2),
-        "ust":     ((w-tw)//2, int(h*0.12)),
-        "alt":     ((w-tw)//2, h-th-int(h*0.12)),
-        "sol_ust": (int(w*0.08), int(h*0.12)),
-        "sag_ust": (w-tw-int(w*0.08), int(h*0.12)),
-        "sol_alt": (int(w*0.08), h-th-int(h*0.12)),
-        "sag_alt": (w-tw-int(w*0.08), h-th-int(h*0.12)),
+        "orta":    ((w - tw) // 2, (h - th) // 2),
+        "ust":     ((w - tw) // 2, int(h * 0.12)),
+        "alt":     ((w - tw) // 2, h - th - int(h * 0.12)),
+        "sol_ust": (int(w * 0.08), int(h * 0.12)),
+        "sag_ust": (w - tw - int(w * 0.08), int(h * 0.12)),
+        "sol_alt": (int(w * 0.08), h - th - int(h * 0.12)),
+        "sag_alt": (w - tw - int(w * 0.08), h - th - int(h * 0.12)),
     }
     x, y = konumlar.get(konum, konumlar["orta"])
-    golge = Image.new("RGBA", img.size, (0,0,0,0))
-    ImageDraw.Draw(golge).text((x+3,y+3), metin, font=font, fill=(20,10,5,90))
+
+    golge = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(golge).text((x + 3, y + 3), metin, font=font, fill=(20, 10, 5, 90))
     golge = golge.filter(ImageFilter.GaussianBlur(radius=2.5))
-    boya = Image.new("RGBA", img.size, (0,0,0,0))
+
+    boya = Image.new("RGBA", img.size, (0, 0, 0, 0))
     bd = ImageDraw.Draw(boya)
-    for ox, oy, renk in [(-1,0,(15,30,100,80)),(1,0,(15,30,100,80)),
-                          (0,-1,(15,30,100,80)),(0,1,(15,30,100,80)),
-                          (0,0,(30,50,140,210))]:
-        bd.text((x+ox, y+oy), metin, font=font, fill=renk)
+    for ox, oy, renk in [
+        (-1, 0, (15, 30, 100, 80)), (1, 0, (15, 30, 100, 80)),
+        (0, -1, (15, 30, 100, 80)), (0, 1, (15, 30, 100, 80)),
+        (0, 0, (30, 50, 140, 210))
+    ]:
+        bd.text((x + ox, y + oy), metin, font=font, fill=renk)
     boya = boya.filter(ImageFilter.GaussianBlur(radius=0.6))
+
     sonuc = Image.alpha_composite(img, golge)
     sonuc = Image.alpha_composite(sonuc, boya)
     return sonuc.convert("RGB")
@@ -361,118 +417,15 @@ def gorsel_to_base64(g):
     return base64.b64encode(buf.read()).decode("utf-8")
 
 
-<<<<<<< HEAD
 # ════════════════════════════════════════════════════════
 # 8. FLASK ENDPOINT'LERİ
 # ════════════════════════════════════════════════════════
 tasarim_oturumlari = {}
-=======
-# ─────────────────────────────────────────────
-# 7. ANA ÜRETİM FONKSİYONU
-# ─────────────────────────────────────────────
-def urun_uret(kullanici_istegi, fotograf_yolu=None, debug=False):
-    print("=" * 50)
-    print("İstek analiz ediliyor...")
-    analiz = istek_analiz_et(kullanici_istegi)
-    print(f"Analiz: {analiz}")
-    print("=" * 50)
 
-    urun_tipi = analiz.get("urun_tipi", "vazo")
-
-    if fotograf_yolu:
-        print(f"[1/3] '{urun_tipi}' üretiliyor (siyah arka plan)...")
-        vazo_img = gorsel_uret(URUN_SABLONLARI[urun_tipi])
-
-        if debug:
-            vazo_img.save(os.path.join(TMPDIR, "vazo_ham.png"))
-            print(f"  [DEBUG] Ham vazo: {os.path.join(TMPDIR, 'vazo_ham.png')}")
-            maske_debug = vazo_maskesi_olustur(vazo_img.convert("RGB"))
-            maske_debug.save(os.path.join(TMPDIR, "maske_debug.png"))
-            print(f"  [DEBUG] Maske: {os.path.join(TMPDIR, 'maske_debug.png')}")
-
-        print("[2/3] Desen uygulanıyor...")
-        desen_img = Image.open(fotograf_yolu).convert("RGB")
-        gorsel = deseni_vazoya_sar(vazo_img, desen_img)
-        print("[3/3] Tamamlandı!")
-    else:
-        print("[1/1] Prompt ile görsel üretiliyor...")
-        ek = URUN_PROMPT_EKLER.get(urun_tipi, "")
-        kultur = analiz.get("kultur", "")
-        kultur_eki = f"{kultur} style" if kultur else ""
-        prompt = f"{ek}, {kultur_eki}, {analiz.get('desen', '')}".strip(", ")
-        gorsel = gorsel_uret(prompt)
-
-    if analiz.get("metin"):
-        gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
-
-    print("=" * 50)
-    return gorsel
-
-
-def gorseli_kaydet(gorsel, dosya_adi="sonuc.png"):
-    gorsel.save(dosya_adi, format="PNG", optimize=True)
-    print(f"Kaydedildi: {dosya_adi}")
-    return dosya_adi
-
-
-# ─────────────────────────────────────────────
-# 8. FLASK API
-# ─────────────────────────────────────────────
-@app.route("/uret", methods=["POST"])
-def uret():
-    """
-    POST /uret
-    Form-data:
-        istek    : str  (zorunlu)
-        fotograf : file (opsiyonel)
-    Yanıt:
-        { basarili, gorsel_base64, analiz }
-    """
-    try:
-        istek_metni = request.form.get("istek", "").strip()
-        if not istek_metni:
-            return jsonify({"basarili": False, "hata": "istek alanı boş"}), 400
-
-        analiz = istek_analiz_et(istek_metni)
-        urun_tipi = analiz.get("urun_tipi", "vazo")
-
-        fotograf_yolu = None
-        if "fotograf" in request.files:
-            dosya = request.files["fotograf"]
-            if dosya.filename:
-                fotograf_yolu = os.path.join(TMPDIR, f"{int(time.time())}_{dosya.filename}")
-                dosya.save(fotograf_yolu)
-
-        if fotograf_yolu:
-            vazo_img = gorsel_uret(URUN_SABLONLARI[urun_tipi])
-            desen_img = Image.open(fotograf_yolu).convert("RGB")
-            gorsel = deseni_vazoya_sar(vazo_img, desen_img)
-        else:
-            ek = URUN_PROMPT_EKLER.get(urun_tipi, "")
-            kultur = analiz.get("kultur", "")
-            kultur_eki = f"{kultur} style" if kultur else ""
-            prompt = f"{ek}, {kultur_eki}, {analiz.get('desen', '')}".strip(", ")
-            gorsel = gorsel_uret(prompt)
-
-        if analiz.get("metin"):
-            gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
-
-        return jsonify({
-            "basarili": True,
-            "gorsel_base64": gorsel_to_base64(gorsel),
-            "analiz": analiz,
-        })
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"basarili": False, "hata": str(e)}), 500
-
->>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
 
 @app.route("/saglik", methods=["GET"])
 def saglik():
-    return jsonify({"durum": "çalışıyor"})
+    return jsonify({"durum": "çalışıyor", "rembg": REMBG_MEVCUT})
 
 
 @app.route("/uret", methods=["POST"])
@@ -495,25 +448,30 @@ def uret():
                 d.save(fotograf_yolu)
 
         if fotograf_yolu:
-            # Fotoğraf modunda: şablon ürün üret + deseni sar
-            vazo_img  = gorsel_uret(URUN_SABLONLARI[urun_tipi])
+            # Fotoğraf modu: sade ürün üret + deseni sar
+            urun_img  = gorsel_uret(URUN_SABLONLARI[urun_tipi], urun_tipi)
             desen_img = Image.open(fotograf_yolu).convert("RGB")
-            gorsel    = deseni_vazoya_sar(vazo_img, desen_img)
+            gorsel    = deseni_urune_sar(urun_img, desen_img, urun_tipi)
+            try:
+                os.remove(fotograf_yolu)
+            except:
+                pass
+            kullanilan_prompt = "fotograf_modu"
         else:
-            # Prompt modunda: kullanıcının isteğine göre prompt oluştur
-            prompt = prompt_olustur(analiz)
-            print(f"Prompt: {prompt}")
-            gorsel = gorsel_uret(prompt)
+            # Prompt modu
+            kullanilan_prompt = prompt_olustur(analiz)
+            print(f"Prompt: {kullanilan_prompt}")
+            gorsel = gorsel_uret(kullanilan_prompt, urun_tipi)
 
         if analiz.get("metin"):
             gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
 
-        print(f"  ⏱️ Toplam süre: {time.time()-t0:.1f}s")
+        print(f"  ⏱️ Toplam süre: {time.time() - t0:.1f}s")
         return jsonify({
             "basarili": True,
             "gorsel_base64": gorsel_to_base64(gorsel),
             "analiz": analiz,
-            "prompt_kullanildi": prompt_olustur(analiz) if not fotograf_yolu else "fotograf_modu"
+            "prompt_kullanildi": kullanilan_prompt
         })
 
     except Exception as e:
@@ -524,111 +482,165 @@ def uret():
 @app.route("/tasarim/baslat", methods=["POST"])
 def tasarim_baslat():
     try:
-        data = request.json
-        kullanici_prompt = data.get("prompt", "")
+        data = request.json or {}
+        kullanici_prompt = data.get("prompt", "").strip()
         urun_tipi = data.get("urun_tipi", "vazo")
+
+        if not kullanici_prompt:
+            return jsonify({"basarili": False, "hata": "prompt boş"}), 400
+
         session_id = base64.b64encode(os.urandom(16)).decode()[:16]
 
         analiz = istek_analiz_et(kullanici_prompt)
         analiz["urun_tipi"] = urun_tipi
 
         prompt = prompt_olustur(analiz)
-        gorsel = gorsel_uret(prompt)
+        gorsel = gorsel_uret(prompt, urun_tipi)
 
         if analiz.get("metin"):
             gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
 
         tasarim_oturumlari[session_id] = {
-            "son_gorsel": gorsel, "tasarim_gecmisi": [gorsel],
-            "prompt_gecmisi": [kullanici_prompt], "urun_tipi": urun_tipi, "analiz": analiz
+            "son_gorsel":      gorsel,
+            "tasarim_gecmisi": [gorsel],
+            "prompt_gecmisi":  [kullanici_prompt],
+            "urun_tipi":       urun_tipi,
+            "analiz":          analiz,
         }
+
         return jsonify({
-            "basarili": True, "session_id": session_id,
-            "gorsel_base64": gorsel_to_base64(gorsel), "analiz": analiz
+            "basarili":      True,
+            "session_id":    session_id,
+            "gorsel_base64": gorsel_to_base64(gorsel),
+            "analiz":        analiz
         })
+
     except Exception as e:
+        import traceback; traceback.print_exc()
         return jsonify({"basarili": False, "hata": str(e)}), 500
 
 
+# ════════════════════════════════════════════════════════
+# DÜZELTİLDİ: Kullanıcı geri bildirimi → AI düzenler
+# Eski hata: prompt birleştirmesi bozuktu, analiz yanlış override ediliyordu
+# ════════════════════════════════════════════════════════
 @app.route("/tasarim/duzenle", methods=["POST"])
 def tasarim_duzenle():
     try:
-        data = request.json
-        session_id = data.get("session_id")
+        data = request.json or {}
+        session_id = data.get("session_id", "")
+        geri_bildirim = data.get("geri_bildirim", "").strip()  # kullanıcının yazılı geri bildirimi
+
         if session_id not in tasarim_oturumlari:
             return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
 
-        oturum = tasarim_oturumlari[session_id]
-        yeni_prompt = f"{oturum['prompt_gecmisi'][-1]}, ancak {data.get('duzenleme', '')}"
+        if not geri_bildirim:
+            return jsonify({"basarili": False, "hata": "geri_bildirim boş"}), 400
 
-        analiz = istek_analiz_et(yeni_prompt)
-        analiz["urun_tipi"] = oturum["urun_tipi"]
+        oturum = tasarim_oturumlari[session_id]
+        orijinal_prompt = oturum["prompt_gecmisi"][0]   # kullanıcının ilk isteği
+        urun_tipi       = oturum["urun_tipi"]
+
+        # Groq'a: orijinal istek + kullanıcının geri bildirimi → yeni tasarım talebi
+        birlesik_istek = (
+            f"Orijinal istek: {orijinal_prompt}\n"
+            f"Kullanıcının geri bildirimi: {geri_bildirim}\n"
+            f"Lütfen bu geri bildirimi dikkate alarak yeni bir tasarım talebi oluştur."
+        )
+
+        # Yeni analiz — urun_tipi'yi koru
+        analiz = istek_analiz_et(birlesik_istek)
+        analiz["urun_tipi"] = urun_tipi          # ürün tipi değişmesin
 
         prompt = prompt_olustur(analiz)
-        gorsel = gorsel_uret(prompt)
+        print(f"  Düzenleme promptu: {prompt}")
+
+        gorsel = gorsel_uret(prompt, urun_tipi)
 
         if analiz.get("metin"):
             gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
 
+        # Geçmişi güncelle
         oturum["son_gorsel"] = gorsel
         oturum["tasarim_gecmisi"].append(gorsel)
-        oturum["prompt_gecmisi"].append(yeni_prompt)
+        oturum["prompt_gecmisi"].append(geri_bildirim)
+        oturum["analiz"] = analiz
 
-        return jsonify({"basarili": True, "gorsel_base64": gorsel_to_base64(gorsel), "analiz": analiz})
+        return jsonify({
+            "basarili":      True,
+            "gorsel_base64": gorsel_to_base64(gorsel),
+            "analiz":        analiz,
+            "prompt_kullanildi": prompt
+        })
+
     except Exception as e:
+        import traceback; traceback.print_exc()
         return jsonify({"basarili": False, "hata": str(e)}), 500
 
 
 @app.route("/tasarim/fotograf_ekle", methods=["POST"])
 def tasarim_fotograf_ekle():
     try:
-        session_id = request.form.get("session_id")
+        session_id = request.form.get("session_id", "")
         dosya = request.files.get("fotograf")
+
         if not dosya:
             return jsonify({"basarili": False, "hata": "Fotoğraf gerekli"}), 400
         if session_id not in tasarim_oturumlari:
             return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
 
-<<<<<<< HEAD
         fotograf_yolu = f"/tmp/{int(time.time())}_{dosya.filename}"
-=======
-        # Fotoğrafı geçici kaydet
-        fotograf_yolu = os.path.join(TMPDIR, f"{int(time.time())}_{dosya.filename}")
->>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
         dosya.save(fotograf_yolu)
 
-        oturum = tasarim_oturumlari[session_id]
-        urun_img  = gorsel_uret(URUN_SABLONLARI[oturum["urun_tipi"]])
+        oturum    = tasarim_oturumlari[session_id]
+        urun_tipi = oturum["urun_tipi"]
+
+        urun_img  = gorsel_uret(URUN_SABLONLARI[urun_tipi], urun_tipi)
         desen_img = Image.open(fotograf_yolu).convert("RGB")
-        gorsel    = deseni_vazoya_sar(urun_img, desen_img)
+        gorsel    = deseni_urune_sar(urun_img, desen_img, urun_tipi)
 
         if oturum["analiz"].get("metin"):
-            gorsel = metni_ekle(gorsel, oturum["analiz"]["metin"],
-                               oturum["analiz"].get("metin_konum", "orta"))
+            gorsel = metni_ekle(
+                gorsel,
+                oturum["analiz"]["metin"],
+                oturum["analiz"].get("metin_konum", "orta")
+            )
 
         oturum["son_gorsel"] = gorsel
         oturum["tasarim_gecmisi"].append(gorsel)
-        try: os.remove(fotograf_yolu)
-        except: pass
+
+        try:
+            os.remove(fotograf_yolu)
+        except:
+            pass
 
         return jsonify({"basarili": True, "gorsel_base64": gorsel_to_base64(gorsel)})
+
     except Exception as e:
+        import traceback; traceback.print_exc()
         return jsonify({"basarili": False, "hata": str(e)}), 500
 
 
 @app.route("/tasarim/gerial", methods=["POST"])
 def tasarim_gerial():
     try:
-        session_id = request.json.get("session_id")
+        session_id = (request.json or {}).get("session_id", "")
         if session_id not in tasarim_oturumlari:
             return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
+
         oturum = tasarim_oturumlari[session_id]
         if len(oturum["tasarim_gecmisi"]) > 1:
             oturum["tasarim_gecmisi"].pop()
-            if oturum["prompt_gecmisi"]: oturum["prompt_gecmisi"].pop()
+            if len(oturum["prompt_gecmisi"]) > 1:
+                oturum["prompt_gecmisi"].pop()
             oturum["son_gorsel"] = oturum["tasarim_gecmisi"][-1]
-            return jsonify({"basarili": True, "gorsel_base64": gorsel_to_base64(oturum["son_gorsel"])})
+            return jsonify({
+                "basarili":      True,
+                "gorsel_base64": gorsel_to_base64(oturum["son_gorsel"])
+            })
+
         return jsonify({"basarili": False, "hata": "Geri alınacak değişiklik yok"}), 400
+
     except Exception as e:
         return jsonify({"basarili": False, "hata": str(e)}), 500
 
@@ -636,32 +648,20 @@ def tasarim_gerial():
 @app.route("/tasarim/kaydet", methods=["POST"])
 def tasarim_kaydet():
     try:
-        session_id = request.json.get("session_id")
-        dosya_adi  = request.json.get("dosya_adi", "tasarim.png")
+        data       = request.json or {}
+        session_id = data.get("session_id", "")
+        dosya_adi  = data.get("dosya_adi", "tasarim.png")
+
         if session_id not in tasarim_oturumlari:
             return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
-        oturum = tasarim_oturumlari[session_id]
-<<<<<<< HEAD
+
+        oturum     = tasarim_oturumlari[session_id]
         kayit_yolu = f"/tmp/son_tasarimlar/{session_id}_{dosya_adi}"
         os.makedirs("/tmp/son_tasarimlar", exist_ok=True)
         oturum["son_gorsel"].save(kayit_yolu)
+
         return jsonify({"basarili": True, "dosya_yolu": kayit_yolu, "mesaj": "Kaydedildi"})
-=======
-        gorsel = oturum["son_gorsel"]
 
-        # Kalıcı kaydet
-        kayit_klasoru = os.path.join(TMPDIR, "son_tasarimlar")
-        os.makedirs(kayit_klasoru, exist_ok=True)
-        kayit_yolu = os.path.join(kayit_klasoru, f"{session_id}_{dosya_adi}")
-        gorsel.save(kayit_yolu)
-
-        return jsonify({
-            "basarili": True,
-            "dosya_yolu": kayit_yolu,
-            "mesaj": "Tasarım kaydedildi"
-        })
-
->>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
     except Exception as e:
         return jsonify({"basarili": False, "hata": str(e)}), 500
 
@@ -678,6 +678,8 @@ _t = threading.Thread(target=_flask_calistir)
 _t.daemon = True
 _t.start()
 time.sleep(2)
-print("✅ KapadokyaCraft v3 hazır!")
+
+print("✅ KapadokyaCraft v4 hazır!")
+print(f"   rembg: {'✅ aktif' if REMBG_MEVCUT else '⚠️ yok (renk bazlı yedek)'}")
 print("📡 Endpoint: http://localhost:5000/uret")
 print("─" * 40)
