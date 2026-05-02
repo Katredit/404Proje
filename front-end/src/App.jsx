@@ -88,34 +88,36 @@ function App() {
 
   return (
     <div className="app">
-      <header className="navbar">
-        <div className="navbar__brand">
-          <span className="navbar__logo">🏔️</span>
-          <div>
-            <span className="navbar__title">Kapadokya Çarşısı</span>
-            <span className="navbar__subtitle">El Sanatları & Yöresel Ürünler</span>
+      <div className="navbar-outer">
+        <header className="navbar">
+          <div className="navbar__brand" onClick={() => setActivePage('market')}>
+            <span className="navbar__logo">🏔️</span>
+            <div className="navbar__brand-text">
+              <span className="navbar__title">Kapadokya Çarşısı</span>
+              <span className="navbar__subtitle">El Sanatları & Yöresel Ürünler</span>
+            </div>
           </div>
-        </div>
-        <nav className="navbar__links">
-          <button
-            className={`navbar__link${activePage === 'market' ? ' navbar__link--active' : ''}`}
-            onClick={() => setActivePage('market')}
-          >Çarşı</button>
-          <button
-            className={`navbar__link${activePage === 'ai' ? ' navbar__link--active' : ''}`}
-            onClick={() => setActivePage('ai')}
-          >✨ Yapay Zeka Tasarım</button>
-          <button
-            className={`navbar__link${activePage === 'seller' ? ' navbar__link--active' : ''}`}
-            onClick={() => setActivePage('seller')}
-          >🏪 Satıcı Ol</button>
-        </nav>
-        <div className="navbar__actions">
-          <button className="navbar__btn navbar__btn--icon">🔍</button>
-          <button className="navbar__btn navbar__btn--icon">🛒</button>
-          <button className="navbar__btn navbar__btn--primary">Giriş Yap</button>
-        </div>
-      </header>
+          <nav className="navbar__links">
+            <button
+              className={`navbar__link${activePage === 'market' ? ' navbar__link--active' : ''}`}
+              onClick={() => setActivePage('market')}
+            >Çarşı</button>
+            <button
+              className={`navbar__link${activePage === 'ai' ? ' navbar__link--active' : ''}`}
+              onClick={() => setActivePage('ai')}
+            >Yapay Zeka Tasarım</button>
+            <button
+              className={`navbar__link${activePage === 'seller' ? ' navbar__link--active' : ''}`}
+              onClick={() => setActivePage('seller')}
+            >Satıcı Ol</button>
+          </nav>
+          <div className="navbar__actions">
+            <button className="navbar__btn navbar__btn--icon"><span className="ms">search</span></button>
+            <button className="navbar__btn navbar__btn--icon"><span className="ms">shopping_basket</span></button>
+            <button className="navbar__btn navbar__btn--primary">Giriş Yap</button>
+          </div>
+        </header>
+      </div>
 
       <main className="main">
         <button
@@ -145,9 +147,11 @@ function App() {
             setHoveredId={setHoveredId}
           />
           <div className="canvas-hint">
-            <span>🖱️ Sürükle: döndür</span>
-            <span>⚙️ Scroll: zoom</span>
-            <span>🏪 Mağazaya tıkla: detay</span>
+            <span className="canvas-hint__item"><span className="ms">mouse</span>Sürükle: döndür</span>
+            <span className="canvas-hint__sep">•</span>
+            <span className="canvas-hint__item"><span className="ms">swap_vert</span>Scroll: zoom</span>
+            <span className="canvas-hint__sep">•</span>
+            <span className="canvas-hint__item"><span className="ms">store</span>Mağazaya tıkla: detay</span>
           </div>
           {!selectedStore && (
             <div className="canvas-overlay">
