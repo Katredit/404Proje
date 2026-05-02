@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import './SellerPage.css';
 
 const CATEGORY_DEFS = [
@@ -54,6 +56,7 @@ function StepIndicator({ current, steps }) {
 
 export default function SellerPage({ onBack, onSubmit, onNavigate }) {
   const { t } = useTranslation();
+  const { refreshUser } = useAuth();
 
   const CATEGORIES = CATEGORY_DEFS.map((c) => ({ ...c, label: t(`seller.categories.${c.value}`) }));
   const FLAGS = FLAG_EMOJIS.map((f) => ({ ...f, label: t(`seller.flags.${f.key}`) }));
@@ -63,6 +66,8 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
   const [form, setForm]           = useState(initialForm);
   const [errors, setErrors]       = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [apiError, setApiError]   = useState('');
+  const [loading, setLoading]     = useState(false);
 
   const navigate = (page) => { onNavigate?.(page); onBack?.(); };
 
@@ -97,9 +102,18 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
     setStep((s) => s + 1);
   };
 
-  const handleSubmit = () => {
-    onSubmit(form);
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    setApiError('');
+    setLoading(true);
+    try {
+      await api.post('/stores', form);
+      await refreshUser();
+      setSubmitted(true);
+    } catch (err) {
+      setApiError(err.response?.data?.hata || 'Dükkan oluşturulamadı.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ── Başarı ekranı ── */
@@ -110,8 +124,8 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
           <div className="seller-page__success-icon">🎉</div>
           <h2>{t('seller.successTitle')}</h2>
           <p dangerouslySetInnerHTML={{ __html: t('seller.successText', { name: form.name }) }} />
-          <button className="seller-page__success-btn" onClick={onBack}>
-            <span className="ms">storefront</span>{t('seller.goToMarket')}
+          <button className="seller-page__success-btn" onClick={() => navigate('dashboard')}>
+            <span className="ms">storefront</span>Dükkanıma Git
           </button>
         </div>
       </div>
@@ -381,9 +395,12 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
                 {t('seller.next')} <span className="ms">arrow_forward</span>
               </button>
             ) : (
-              <button className="seller-page__btn seller-page__btn--primary" onClick={handleSubmit}>
-                <span className="ms">storefront</span>{t('seller.submit')}
-              </button>
+              <>
+                {apiError && <span className="seller-page__api-error">{apiError}</span>}
+                <button className="seller-page__btn seller-page__btn--primary" onClick={handleSubmit} disabled={loading}>
+                  <span className="ms">storefront</span>{loading ? 'Oluşturuluyor…' : t('seller.submit')}
+                </button>
+              </>
             )}
           </div>
         </div>

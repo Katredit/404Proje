@@ -12,7 +12,20 @@ def pip(p):
 
 pip("groq"); pip("flask"); pip("flask-cors"); pip("pillow"); pip("numpy"); pip("requests")
 
+<<<<<<< HEAD
 import os, json, time, base64, threading
+=======
+import os
+import tempfile
+os.environ["GROQ_API_KEY"] = "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"
+os.environ["HF_TOKEN"] = "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"
+
+TMPDIR = tempfile.gettempdir()
+
+import json
+import requests
+import urllib.parse
+>>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
 import numpy as np
 from io import BytesIO
 from groq import Groq
@@ -348,10 +361,114 @@ def gorsel_to_base64(g):
     return base64.b64encode(buf.read()).decode("utf-8")
 
 
+<<<<<<< HEAD
 # ════════════════════════════════════════════════════════
 # 8. FLASK ENDPOINT'LERİ
 # ════════════════════════════════════════════════════════
 tasarim_oturumlari = {}
+=======
+# ─────────────────────────────────────────────
+# 7. ANA ÜRETİM FONKSİYONU
+# ─────────────────────────────────────────────
+def urun_uret(kullanici_istegi, fotograf_yolu=None, debug=False):
+    print("=" * 50)
+    print("İstek analiz ediliyor...")
+    analiz = istek_analiz_et(kullanici_istegi)
+    print(f"Analiz: {analiz}")
+    print("=" * 50)
+
+    urun_tipi = analiz.get("urun_tipi", "vazo")
+
+    if fotograf_yolu:
+        print(f"[1/3] '{urun_tipi}' üretiliyor (siyah arka plan)...")
+        vazo_img = gorsel_uret(URUN_SABLONLARI[urun_tipi])
+
+        if debug:
+            vazo_img.save(os.path.join(TMPDIR, "vazo_ham.png"))
+            print(f"  [DEBUG] Ham vazo: {os.path.join(TMPDIR, 'vazo_ham.png')}")
+            maske_debug = vazo_maskesi_olustur(vazo_img.convert("RGB"))
+            maske_debug.save(os.path.join(TMPDIR, "maske_debug.png"))
+            print(f"  [DEBUG] Maske: {os.path.join(TMPDIR, 'maske_debug.png')}")
+
+        print("[2/3] Desen uygulanıyor...")
+        desen_img = Image.open(fotograf_yolu).convert("RGB")
+        gorsel = deseni_vazoya_sar(vazo_img, desen_img)
+        print("[3/3] Tamamlandı!")
+    else:
+        print("[1/1] Prompt ile görsel üretiliyor...")
+        ek = URUN_PROMPT_EKLER.get(urun_tipi, "")
+        kultur = analiz.get("kultur", "")
+        kultur_eki = f"{kultur} style" if kultur else ""
+        prompt = f"{ek}, {kultur_eki}, {analiz.get('desen', '')}".strip(", ")
+        gorsel = gorsel_uret(prompt)
+
+    if analiz.get("metin"):
+        gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
+
+    print("=" * 50)
+    return gorsel
+
+
+def gorseli_kaydet(gorsel, dosya_adi="sonuc.png"):
+    gorsel.save(dosya_adi, format="PNG", optimize=True)
+    print(f"Kaydedildi: {dosya_adi}")
+    return dosya_adi
+
+
+# ─────────────────────────────────────────────
+# 8. FLASK API
+# ─────────────────────────────────────────────
+@app.route("/uret", methods=["POST"])
+def uret():
+    """
+    POST /uret
+    Form-data:
+        istek    : str  (zorunlu)
+        fotograf : file (opsiyonel)
+    Yanıt:
+        { basarili, gorsel_base64, analiz }
+    """
+    try:
+        istek_metni = request.form.get("istek", "").strip()
+        if not istek_metni:
+            return jsonify({"basarili": False, "hata": "istek alanı boş"}), 400
+
+        analiz = istek_analiz_et(istek_metni)
+        urun_tipi = analiz.get("urun_tipi", "vazo")
+
+        fotograf_yolu = None
+        if "fotograf" in request.files:
+            dosya = request.files["fotograf"]
+            if dosya.filename:
+                fotograf_yolu = os.path.join(TMPDIR, f"{int(time.time())}_{dosya.filename}")
+                dosya.save(fotograf_yolu)
+
+        if fotograf_yolu:
+            vazo_img = gorsel_uret(URUN_SABLONLARI[urun_tipi])
+            desen_img = Image.open(fotograf_yolu).convert("RGB")
+            gorsel = deseni_vazoya_sar(vazo_img, desen_img)
+        else:
+            ek = URUN_PROMPT_EKLER.get(urun_tipi, "")
+            kultur = analiz.get("kultur", "")
+            kultur_eki = f"{kultur} style" if kultur else ""
+            prompt = f"{ek}, {kultur_eki}, {analiz.get('desen', '')}".strip(", ")
+            gorsel = gorsel_uret(prompt)
+
+        if analiz.get("metin"):
+            gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
+
+        return jsonify({
+            "basarili": True,
+            "gorsel_base64": gorsel_to_base64(gorsel),
+            "analiz": analiz,
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"basarili": False, "hata": str(e)}), 500
+
+>>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
 
 @app.route("/saglik", methods=["GET"])
 def saglik():
@@ -472,7 +589,12 @@ def tasarim_fotograf_ekle():
         if session_id not in tasarim_oturumlari:
             return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
 
+<<<<<<< HEAD
         fotograf_yolu = f"/tmp/{int(time.time())}_{dosya.filename}"
+=======
+        # Fotoğrafı geçici kaydet
+        fotograf_yolu = os.path.join(TMPDIR, f"{int(time.time())}_{dosya.filename}")
+>>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
         dosya.save(fotograf_yolu)
 
         oturum = tasarim_oturumlari[session_id]
@@ -519,10 +641,27 @@ def tasarim_kaydet():
         if session_id not in tasarim_oturumlari:
             return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
         oturum = tasarim_oturumlari[session_id]
+<<<<<<< HEAD
         kayit_yolu = f"/tmp/son_tasarimlar/{session_id}_{dosya_adi}"
         os.makedirs("/tmp/son_tasarimlar", exist_ok=True)
         oturum["son_gorsel"].save(kayit_yolu)
         return jsonify({"basarili": True, "dosya_yolu": kayit_yolu, "mesaj": "Kaydedildi"})
+=======
+        gorsel = oturum["son_gorsel"]
+
+        # Kalıcı kaydet
+        kayit_klasoru = os.path.join(TMPDIR, "son_tasarimlar")
+        os.makedirs(kayit_klasoru, exist_ok=True)
+        kayit_yolu = os.path.join(kayit_klasoru, f"{session_id}_{dosya_adi}")
+        gorsel.save(kayit_yolu)
+
+        return jsonify({
+            "basarili": True,
+            "dosya_yolu": kayit_yolu,
+            "mesaj": "Tasarım kaydedildi"
+        })
+
+>>>>>>> 8f33e2eebfe6f85298c9d56ddb7f47f691195208
     except Exception as e:
         return jsonify({"basarili": False, "hata": str(e)}), 500
 

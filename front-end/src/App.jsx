@@ -133,23 +133,15 @@ function App() {
         <AIDesignPage onBack={() => setActivePage('market')} onNavigate={setActivePage} />
       )}
 
-      {/* ── Satıcı Ol sayfası (dükkanı olmayan giriş yapmış kullanıcılar) ── */}
+      {/* ── Satıcı Ol sayfası (eski tasarım, backend'e bağlı) ── */}
       {activePage === 'seller' && user && !hasSeller && (
         <SellerPage
           onBack={() => setActivePage('market')}
-          onSubmit={handleAddSeller}
           onNavigate={setActivePage}
         />
       )}
 
-      {/* ── Satıcı Dashboard (dükkanı olan kullanıcılar) ── */}
-      {activePage === 'dashboard' && user && (
-        <main className="main main--full">
-          <SellerDashboard />
-        </main>
-      )}
-
-      {/* ── Satıcı Ol sayfasına erişim — giriş gerekilir ── */}
+      {/* ── Satıcı Ol — giriş gerekilir ── */}
       {activePage === 'seller' && !user && (
         <main className="main main--full">
           <div className="app-auth-gate">
@@ -160,6 +152,13 @@ function App() {
               Giriş Yap / Kayıt Ol
             </button>
           </div>
+        </main>
+      )}
+
+      {/* ── Satıcı Dashboard (sadece dükkanı olanlar) ── */}
+      {activePage === 'dashboard' && user && (
+        <main className="main main--full">
+          <SellerDashboard />
         </main>
       )}
 

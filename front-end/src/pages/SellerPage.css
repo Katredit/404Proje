@@ -597,7 +597,21 @@
   opacity: 0.9;
   box-shadow: 0 4px 16px rgba(192,57,43,0.35);
 }
+.seller-page__btn--primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .seller-page__btn--primary .ms { font-size: 18px; }
+
+.seller-page__api-error {
+  color: #f08070;
+  font-size: 0.82rem;
+  align-self: center;
+  background: rgba(220,50,50,0.1);
+  border: 1px solid rgba(220,50,50,0.25);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+}
 
 /* ── Success screen ── */
 .seller-page__success {

@@ -1,0 +1,26 @@
+[
+  {
+    "ownerId": "1777753005928",
+    "name": "Çini Evi",
+    "owner": "Arda Dönmez",
+    "category": "Seramik",
+    "description": "asdasdasdsa",
+    "location": "Göreme",
+    "openSince": 2026,
+    "flag": "🔵",
+    "badge": "Yeni",
+    "color": "#C0392B",
+    "accentColor": "#E74C3C",
+    "roofColor": "#922B21",
+    "products": [],
+    "rating": 5,
+    "reviewCount": 0,
+    "position": [
+      -4,
+      0,
+      -2
+    ],
+    "createdAt": "2026-05-02T20:23:05.913Z",
+    "id": "1777753385913"
+  }
+]
