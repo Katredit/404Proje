@@ -8,10 +8,12 @@ Original file is located at
 """
 
 import os
+import tempfile
 os.environ["GROQ_API_KEY"] = "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"
 os.environ["HF_TOKEN"] = "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"
 
-import os
+TMPDIR = tempfile.gettempdir()
+
 import json
 import requests
 import urllib.parse
@@ -274,11 +276,11 @@ def urun_uret(kullanici_istegi, fotograf_yolu=None, debug=False):
         vazo_img = gorsel_uret(URUN_SABLONLARI[urun_tipi])
 
         if debug:
-            vazo_img.save("/tmp/vazo_ham.png")
-            print("  [DEBUG] Ham vazo: /tmp/vazo_ham.png")
+            vazo_img.save(os.path.join(TMPDIR, "vazo_ham.png"))
+            print(f"  [DEBUG] Ham vazo: {os.path.join(TMPDIR, 'vazo_ham.png')}")
             maske_debug = vazo_maskesi_olustur(vazo_img.convert("RGB"))
-            maske_debug.save("/tmp/maske_debug.png")
-            print("  [DEBUG] Maske: /tmp/maske_debug.png")
+            maske_debug.save(os.path.join(TMPDIR, "maske_debug.png"))
+            print(f"  [DEBUG] Maske: {os.path.join(TMPDIR, 'maske_debug.png')}")
 
         print("[2/3] Desen uygulanıyor...")
         desen_img = Image.open(fotograf_yolu).convert("RGB")
@@ -330,7 +332,7 @@ def uret():
         if "fotograf" in request.files:
             dosya = request.files["fotograf"]
             if dosya.filename:
-                fotograf_yolu = f"/tmp/{int(time.time())}_{dosya.filename}"
+                fotograf_yolu = os.path.join(TMPDIR, f"{int(time.time())}_{dosya.filename}")
                 dosya.save(fotograf_yolu)
 
         if fotograf_yolu:
@@ -473,7 +475,7 @@ def tasarim_fotograf_ekle():
             return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
 
         # Fotoğrafı geçici kaydet
-        fotograf_yolu = f"/tmp/{int(time.time())}_{dosya.filename}"
+        fotograf_yolu = os.path.join(TMPDIR, f"{int(time.time())}_{dosya.filename}")
         dosya.save(fotograf_yolu)
 
         oturum = tasarim_oturumlari[session_id]
@@ -548,8 +550,9 @@ def tasarim_kaydet():
         gorsel = oturum["son_gorsel"]
 
         # Kalıcı kaydet
-        kayit_yolu = f"/tmp/son_tasarimlar/{session_id}_{dosya_adi}"
-        os.makedirs("/tmp/son_tasarimlar", exist_ok=True)
+        kayit_klasoru = os.path.join(TMPDIR, "son_tasarimlar")
+        os.makedirs(kayit_klasoru, exist_ok=True)
+        kayit_yolu = os.path.join(kayit_klasoru, f"{session_id}_{dosya_adi}")
         gorsel.save(kayit_yolu)
 
         return jsonify({

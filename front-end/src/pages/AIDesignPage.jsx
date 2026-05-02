@@ -21,14 +21,28 @@ const PRESETS = {
   ],
 };
 export default function AIDesignPage({ onBack, onNavigate }) {
-  const [productType, setProductType] = useState('vazo');
-  const [prompt, setPrompt]           = useState('');
-  const [loading, setLoading]         = useState(false);
-  const [result, setResult]           = useState(null);
-  const [error, setError]             = useState('');
-  const [history, setHistory]         = useState([]);
+  const [productType, setProductType]   = useState('vazo');
+  const [prompt, setPrompt]             = useState('');
+  const [photo, setPhoto]               = useState(null);
+  const [loading, setLoading]           = useState(false);
+  const [result, setResult]             = useState(null);
+  const [sessionId, setSessionId]       = useState(null);
+  const [editPrompt, setEditPrompt]     = useState('');
+  const [editPhoto, setEditPhoto]       = useState(null);
+  const [editLoading, setEditLoading]   = useState(false);
+  const [canUndo, setCanUndo]           = useState(false);
+  const [error, setError]               = useState('');
+  const [editError, setEditError]       = useState('');
+  const [history, setHistory]           = useState([]);
   const [activePreset, setActivePreset] = useState(null);
-  const promptRef = useRef(null);
+  const [dragOver, setDragOver]         = useState(false);
+  const [editDragOver, setEditDragOver] = useState(false);
+
+  const promptRef    = useRef(null);
+  const photoRef     = useRef(null);
+  const editPhotoRef = useRef(null);
+
+  const toDataUrl = (b64) => `data:image/png;base64,${b64}`;
 
   const handleProductTypeChange = (type) => {
     setProductType(type);
@@ -42,18 +56,46 @@ export default function AIDesignPage({ onBack, onNavigate }) {
     promptRef.current?.focus();
   };
 
+  const handlePhotoFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setPhoto(file);
+  };
+
+  const handleEditPhotoFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setEditPhoto(file);
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) { setError('Lütfen bir tasarım açıklaması girin.'); return; }
     setError('');
     setLoading(true);
+    setResult(null);
+    setSessionId(null);
+    setCanUndo(false);
     try {
-      const form = new FormData();
-      form.append('istek', `${productType} tasarımı: ${prompt}`);
-      const response = await fetch(`${BASE_URL}/uret`, { method: 'POST', body: form });
-      if (!response.ok) throw new Error(`Sunucu hatası: ${response.status}`);
-      const data = await response.json();
-      if (!data.basarili) throw new Error(data.hata || 'Görsel üretilemedi.');
-      const imgSrc = `data:image/png;base64,${data.gorsel_base64}`;
+      let imgSrc;
+      if (photo) {
+        const form = new FormData();
+        form.append('istek', `${productType} tasarımı: ${prompt}`);
+        form.append('fotograf', photo);
+        const res = await fetch(`${BASE_URL}/uret`, { method: 'POST', body: form });
+        if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
+        const data = await res.json();
+        if (!data.basarili) throw new Error(data.hata || 'Görsel üretilemedi.');
+        imgSrc = toDataUrl(data.gorsel_base64);
+      } else {
+        const res = await fetch(`${BASE_URL}/tasarim/baslat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: `${productType} tasarımı: ${prompt}`, urun_tipi: productType }),
+        });
+        if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
+        const data = await res.json();
+        if (!data.basarili) throw new Error(data.hata || 'Görsel üretilemedi.');
+        imgSrc = toDataUrl(data.gorsel_base64);
+        setSessionId(data.session_id);
+      }
       setResult(imgSrc);
       setHistory((h) => [{ url: imgSrc, prompt, ts: Date.now() }, ...h.slice(0, 7)]);
     } catch (err) {
@@ -61,6 +103,85 @@ export default function AIDesignPage({ onBack, onNavigate }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = async () => {
+    if (!sessionId || !editPrompt.trim()) { setEditError('Düzenleme açıklaması girin.'); return; }
+    setEditError('');
+    setEditLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/tasarim/duzenle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, duzenleme: editPrompt }),
+      });
+      if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
+      const data = await res.json();
+      if (!data.basarili) throw new Error(data.hata || 'Düzenleme başarısız.');
+      const imgSrc = toDataUrl(data.gorsel_base64);
+      setResult(imgSrc);
+      setCanUndo(true);
+      setEditPrompt('');
+      setHistory((h) => [{ url: imgSrc, prompt: editPrompt, ts: Date.now() }, ...h.slice(0, 7)]);
+    } catch (err) {
+      setEditError(err.message || 'Bir hata oluştu.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleEditPhoto = async () => {
+    if (!sessionId || !editPhoto) return;
+    setEditError('');
+    setEditLoading(true);
+    try {
+      const form = new FormData();
+      form.append('session_id', sessionId);
+      form.append('fotograf', editPhoto);
+      const res = await fetch(`${BASE_URL}/tasarim/fotograf_ekle`, { method: 'POST', body: form });
+      if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
+      const data = await res.json();
+      if (!data.basarili) throw new Error(data.hata || 'Fotoğraf eklenemedi.');
+      const imgSrc = toDataUrl(data.gorsel_base64);
+      setResult(imgSrc);
+      setCanUndo(true);
+      setEditPhoto(null);
+      setHistory((h) => [{ url: imgSrc, prompt: 'Desen fotoğrafı uygulandı', ts: Date.now() }, ...h.slice(0, 7)]);
+    } catch (err) {
+      setEditError(err.message || 'Bir hata oluştu.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!sessionId) return;
+    setEditLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/tasarim/gerial`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const data = await res.json();
+      if (!data.basarili) { setEditError(data.hata || 'Geri alınamadı.'); return; }
+      setResult(toDataUrl(data.gorsel_base64));
+      setCanUndo(false);
+    } catch (err) {
+      setEditError(err.message);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setSessionId(null);
+    setCanUndo(false);
+    setEditPrompt('');
+    setEditPhoto(null);
+    setEditError('');
+    setPhoto(null);
   };
 
   return (
@@ -134,6 +255,45 @@ export default function AIDesignPage({ onBack, onNavigate }) {
             />
           </div>
 
+          {/* Desen fotoğrafı */}
+          <div className="ai-page__section">
+            <label className="ai-page__label">
+              Desen Fotoğrafı <span className="ai-page__label-hint">— opsiyonel</span>
+            </label>
+            <div
+              className={`ai-page__upload${dragOver ? ' ai-page__upload--drag' : ''}${photo ? ' ai-page__upload--has-file' : ''}`}
+              onClick={() => photoRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); handlePhotoFile(e.dataTransfer.files[0]); }}
+            >
+              <input
+                ref={photoRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => handlePhotoFile(e.target.files[0])}
+              />
+              {photo ? (
+                <div className="ai-page__upload-preview">
+                  <img src={URL.createObjectURL(photo)} alt="önizleme" />
+                  <div className="ai-page__upload-preview-name">{photo.name}</div>
+                  <button
+                    className="ai-page__upload-remove"
+                    onClick={(e) => { e.stopPropagation(); setPhoto(null); photoRef.current.value = ''; }}
+                  >
+                    <span className="ms">close</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="ai-page__upload-empty">
+                  <span className="ms">add_photo_alternate</span>
+                  <span>Fotoğraf ekle veya sürükle</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {error && <div className="ai-page__error">⚠️ {error}</div>}
 
           <button
@@ -170,9 +330,14 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                   <a href={result} download="kapadokya-tasarim.png" className="ai-page__result-btn">
                     <span className="ms">download</span>İndir
                   </a>
+                  {canUndo && (
+                    <button className="ai-page__result-btn ai-page__result-btn--outline" onClick={handleUndo} disabled={editLoading}>
+                      <span className="ms">undo</span>Geri Al
+                    </button>
+                  )}
                   <button
                     className="ai-page__result-btn ai-page__result-btn--outline"
-                    onClick={() => setResult(null)}
+                    onClick={handleReset}
                   >
                     <span className="ms">refresh</span>Yeni Tasarım
                   </button>
@@ -190,6 +355,85 @@ export default function AIDesignPage({ onBack, onNavigate }) {
               </div>
             )}
           </div>
+
+          {/* Düzenleme paneli */}
+          {result && sessionId && (
+            <div className="ai-page__edit-panel">
+              <div className="ai-page__edit-panel__title">
+                <span className="ms">edit</span>
+                Tasarımı Düzenle
+              </div>
+
+              <div className="ai-page__edit-row">
+                <textarea
+                  className="ai-page__textarea ai-page__textarea--sm"
+                  placeholder='Örn: "renkleri koyulaştır", "ortaya lale motifi ekle"...'
+                  value={editPrompt}
+                  onChange={(e) => setEditPrompt(e.target.value)}
+                  rows={2}
+                />
+                <button
+                  className="ai-page__edit-btn"
+                  onClick={handleEdit}
+                  disabled={editLoading || !editPrompt.trim()}
+                >
+                  {editLoading
+                    ? <span className="ai-page__spinner ai-page__spinner--sm" />
+                    : <span className="ms">auto_fix_high</span>
+                  }
+                  Uygula
+                </button>
+              </div>
+
+              <div className="ai-page__edit-photo-row">
+                <div
+                  className={`ai-page__upload ai-page__upload--sm${editDragOver ? ' ai-page__upload--drag' : ''}${editPhoto ? ' ai-page__upload--has-file' : ''}`}
+                  onClick={() => editPhotoRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setEditDragOver(true); }}
+                  onDragLeave={() => setEditDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setEditDragOver(false); handleEditPhotoFile(e.dataTransfer.files[0]); }}
+                >
+                  <input
+                    ref={editPhotoRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => handleEditPhotoFile(e.target.files[0])}
+                  />
+                  {editPhoto ? (
+                    <div className="ai-page__upload-preview ai-page__upload-preview--sm">
+                      <img src={URL.createObjectURL(editPhoto)} alt="desen" />
+                      <span className="ai-page__upload-preview-name">{editPhoto.name}</span>
+                      <button
+                        className="ai-page__upload-remove"
+                        onClick={(e) => { e.stopPropagation(); setEditPhoto(null); editPhotoRef.current.value = ''; }}
+                      >
+                        <span className="ms">close</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="ai-page__upload-empty">
+                      <span className="ms">add_photo_alternate</span>
+                      <span>Desen fotoğrafı ekle</span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  className="ai-page__edit-btn"
+                  onClick={handleEditPhoto}
+                  disabled={editLoading || !editPhoto}
+                >
+                  {editLoading
+                    ? <span className="ai-page__spinner ai-page__spinner--sm" />
+                    : <span className="ms">brush</span>
+                  }
+                  Deseni Uygula
+                </button>
+              </div>
+
+              {editError && <div className="ai-page__error">{editError}</div>}
+            </div>
+          )}
 
           {history.length > 0 && (
             <div className="ai-page__history">
