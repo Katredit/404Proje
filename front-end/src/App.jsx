@@ -1,122 +1,83 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+﻿import { useState } from 'react';
+import MarketScene from './components/MarketScene';
+import StorePanel from './components/StorePanel';
+import StoreListSidebar from './components/StoreListSidebar';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [selectedStore, setSelectedStore] = useState(null);
+  const [hoveredId, setHoveredId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      <header className="navbar">
+        <div className="navbar__brand">
+          <span className="navbar__logo">🏔️</span>
+          <div>
+            <span className="navbar__title">Kapadokya Çarşısı</span>
+            <span className="navbar__subtitle">El Sanatları & Yöresel Ürünler</span>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+        <nav className="navbar__links">
+          <a href="#" className="navbar__link navbar__link--active">Çarşı</a>
+          <a href="#" className="navbar__link">Ürünler</a>
+          <a href="#" className="navbar__link">Yapay Zeka Tasarım</a>
+          <a href="#" className="navbar__link">Satıcı Ol</a>
+        </nav>
+        <div className="navbar__actions">
+          <button className="navbar__btn navbar__btn--icon">🔍</button>
+          <button className="navbar__btn navbar__btn--icon">🛒</button>
+          <button className="navbar__btn navbar__btn--primary">Giriş Yap</button>
         </div>
+      </header>
+
+      <main className="main">
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          className={`sidebar-toggle${sidebarOpen ? ' sidebar-toggle--open' : ''}`}
+          onClick={() => setSidebarOpen((v) => !v)}
+          title="Mağaza listesini göster/gizle"
         >
-          Count is {count}
+          {sidebarOpen ? '◀' : '▶'}
         </button>
-      </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className={`sidebar-wrapper${sidebarOpen ? ' sidebar-wrapper--open' : ''}`}>
+          <StoreListSidebar
+            selectedStore={selectedStore}
+            onSelectStore={setSelectedStore}
+            hoveredId={hoveredId}
+            onHover={setHoveredId}
+          />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <div className="canvas-wrapper">
+          <MarketScene
+            selectedStore={selectedStore}
+            setSelectedStore={setSelectedStore}
+            hoveredId={hoveredId}
+            setHoveredId={setHoveredId}
+          />
+          <div className="canvas-hint">
+            <span>🖱️ Sürükle: döndür</span>
+            <span>⚙️ Scroll: zoom</span>
+            <span>🏪 Mağazaya tıkla: detay</span>
+          </div>
+          {!selectedStore && (
+            <div className="canvas-overlay">
+              <h1 className="canvas-overlay__title">Kapadokya 3D Çarşısı</h1>
+              <p className="canvas-overlay__sub">Mağazaları keşfetmek için tıkla veya döndür</p>
+            </div>
+          )}
+        </div>
+
+        {selectedStore && (
+          <div className="panel-wrapper">
+            <StorePanel store={selectedStore} onClose={() => setSelectedStore(null)} />
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
