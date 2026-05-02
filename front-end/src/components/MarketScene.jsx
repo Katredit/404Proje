@@ -6,11 +6,10 @@ import {
 } from '@react-three/drei';
 import { Suspense, useRef } from 'react';
 import StoreBuilding from './StoreBuilding';
-import { stores } from '../data/stores';
 import GroundDecor from './GroundDecor';
 import GroundModel from './GroundModel';
 
-function Scene({ selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
+function Scene({ stores, selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
   return (
     <>
       {/* Işıklar */}
@@ -75,7 +74,7 @@ function Scene({ selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
   );
 }
 
-function MarketScene({ selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
+function MarketScene({ stores, selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
   return (
     <Canvas
       shadows
@@ -86,6 +85,7 @@ function MarketScene({ selectedStore, setSelectedStore, hoveredId, setHoveredId 
     >
       <Suspense fallback={null}>
         <Scene
+          stores={stores}
           selectedStore={selectedStore}
           setSelectedStore={setSelectedStore}
           hoveredId={hoveredId}

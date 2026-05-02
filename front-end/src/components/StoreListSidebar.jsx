@@ -1,11 +1,9 @@
-import { stores } from '../data/stores';
-
-function StoreListSidebar({ selectedStore, onSelectStore, hoveredId, onHover }) {
+function StoreListSidebar({ stores, selectedStore, onSelectStore, hoveredId, onHover }) {
   return (
     <div className="sidebar">
       <div className="sidebar__header">
         <h3 className="sidebar__title">Tüm Mağazalar</h3>
-        <span className="sidebar__count">{stores.length} mağaza</span>
+        <span className="sidebar__count">{stores?.length ?? 0} mağaza</span>
       </div>
       <ul className="sidebar__list">
         {stores.map((store) => {
