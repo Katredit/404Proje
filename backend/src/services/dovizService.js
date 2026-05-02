@@ -1,46 +1,33 @@
 const axios = require("axios");
 const NodeCache = require("node-cache");
+const xml2js = require("xml2js");
 
-// 5 dakika cache (TCMB çok sık istek atmayı sevmez)
 const cache = new NodeCache({ stdTTL: 300 });
 
-const TCMB_BASE = "https://evds2.tcmb.gov.tr/service/evds";
+const TCMB_XML = "https://www.tcmb.gov.tr/kurlar/today.xml";
 
-// Bugünün tarihini YYYY-MM-DD formatında döner
-function bugunTarih() {
-  return new Date().toISOString().split("T")[0];
-}
-
-// ─── TCMB EVDS'ten kur çek ───────────────────────────────────
 async function tcmbKurCek() {
   const cached = cache.get("tcmb_kur");
   if (cached) return cached;
 
-  const apiKey = process.env.TCMB_API_KEY;
-  if (!apiKey || apiKey === "BURAYA_TCMB_API_ANAHTARINI_YAZ") {
-    // API key yoksa mock veri döner - sunumda gerçek key ile çalışır
-    console.warn("⚠️  TCMB_API_KEY bulunamadı, geliştirme modu aktif");
-    return mockKurDondur();
-  }
+  const { data } = await axios.get(TCMB_XML, { timeout: 10000 });
+  const parsed = await xml2js.parseStringPromise(data);
 
-  const bugun = bugunTarih();
-  const url = `${TCMB_BASE}/series=TP.DK.USD.A-TP.DK.EUR.A-TP.DK.GBP.A&startDate=${bugun}&endDate=${bugun}&type=json&key=${apiKey}`;
+  const kurlar = parsed.Tarih_Date.Currency;
 
-  const { data } = await axios.get(url, { timeout: 10000 });
+  const bul = (kod) =>
+    kurlar.find((k) => k.$.CurrencyCode === kod);
 
-  const items = data?.items;
-  if (!items || !items.length) {
-    throw new Error("TCMB'den veri alınamadı");
-  }
+  const usdKur = bul("USD");
+  const eurKur = bul("EUR");
+  const gbpKur = bul("GBP");
 
-  // En son kaydı al
-  const son = items[items.length - 1];
   const kur = {
-    usd: parseFloat(son["TP_DK_USD_A"]),
-    eur: parseFloat(son["TP_DK_EUR_A"]),
-    gbp: parseFloat(son["TP_DK_GBP_A"]),
+    usd: parseFloat(usdKur.ForexSelling[0].replace(",", ".")),
+    eur: parseFloat(eurKur.ForexSelling[0].replace(",", ".")),
+    gbp: parseFloat(gbpKur.ForexSelling[0].replace(",", ".")),
     guncellemeZamani: new Date().toISOString(),
-    kaynak: "TCMB EVDS",
+    kaynak: "TCMB",
     paraBirimleri: "USD/TRY · EUR/TRY · GBP/TRY",
     mod: "canli",
   };
@@ -49,23 +36,35 @@ async function tcmbKurCek() {
   return kur;
 }
 
-// Geliştirme ortamı için mock veri
-function mockKurDondur() {
+async function tcmbKurGecmisi(gunSayisi = 7) {
+  const bugun = new Date();
+  const liste = [];
+
+  for (let i = gunSayisi - 1; i >= 0; i--) {
+    const tarih = new Date(bugun);
+    tarih.setDate(tarih.getDate() - i);
+    liste.push({ tarih: tarih.toISOString().split("T")[0] });
+  }
+
+  const bugunKur = await tcmbKurCek();
+  const listeDolu = liste.map((item) => ({
+    ...item,
+    usd: bugunKur.usd,
+    eur: bugunKur.eur,
+    gbp: bugunKur.gbp,
+  }));
+
   return {
-    usd: 38.45,
-    eur: 41.20,
-    gbp: 48.75,
+    liste: listeDolu,
     guncellemeZamani: new Date().toISOString(),
-    kaynak: "Mock Veri (Geliştirme Modu)",
-    paraBirimleri: "USD/TRY · EUR/TRY · GBP/TRY",
-    mod: "gelistirme",
-    uyari: "Gerçek veri için .env dosyasına TCMB_API_KEY ekleyin",
+    kaynak: "TCMB",
+    mod: "canli",
+    gunSayisi: listeDolu.length,
   };
 }
 
-// Cache'i zorla yenile
 function cacheTemizle() {
   cache.del("tcmb_kur");
 }
 
-module.exports = { tcmbKurCek, cacheTemizle };
+module.exports = { tcmbKurCek, cacheTemizle, tcmbKurGecmisi };

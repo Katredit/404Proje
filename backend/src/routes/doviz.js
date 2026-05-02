@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { tcmbKurCek, cacheTemizle } = require("../services/dovizService");
+const { tcmbKurCek, cacheTemizle, tcmbKurGecmisi } = require("../services/dovizService");
 
 // ─── GET /api/doviz/guncel ────────────────────────────────────
 // TCMB EVDS'ten güncel USD, EUR, GBP kurlarını döner
@@ -15,6 +15,24 @@ router.get("/guncel", async (_req, res) => {
       baglantiDurumu: "kesildi",
       aciklama: "Son bilinen kur verisi için /api/doviz/guncel?zorlaYenile=false deneyin",
     });
+  }
+});
+
+// ─── GET /api/doviz/haftalik ──────────────────────────────────
+// Son 7 günün döviz kurlarını döner. Opsiyonel query param: gunSayisi
+router.get("/haftalik", async (req, res) => {
+  try {
+    const gunSayisi = req.query.gunSayisi ? parseInt(req.query.gunSayisi, 10) : 7;
+    if (isNaN(gunSayisi) || gunSayisi < 1 || gunSayisi > 30) {
+      return res.status(400).json({
+        hata: '"gunSayisi" 1 ile 30 arasında bir sayı olmalıdır.',
+      });
+    }
+
+    const kurGecmisi = await tcmbKurGecmisi(gunSayisi);
+    res.json(kurGecmisi);
+  } catch (err) {
+    res.status(503).json({ hata: "Geçmiş döviz verisi alınamadı: " + err.message });
   }
 });
 

@@ -34,10 +34,27 @@ app.get("/", (_req, res) => {
     endpointler: {
       "GET /api/karbon/hesapla":     "Kural 1 – Karbon ayak izi hesabı",
       "GET /api/doviz/guncel":       "Kural 2 – TCMB canlı döviz kuru",
+      "GET /api/doviz/haftalik":      "Kural 2 – Son 7 günün döviz kurları",
       "GET /api/doviz/cevirici":     "Kural 2 – TL → döviz çevirici",
       "GET /api/cografya/koordinat": "Kural 3 – Şehir → koordinat",
       "GET /api/cografya/atolyeler": "Kural 3 – Yakın atölye listesi",
+      "GET /api/cografya/mesafe":    "Kural 3 – Şehirler arası mesafe",
       "GET /api/bonus/zincir":       "Bonus – Mesafe + CO₂ + Döviz zinciri",
+      "POST /api/doviz/yenile":      "Kural 2 – Kur verisini yenile",
+    },
+    testUrl: {
+      base: "http://localhost:3001",
+      ornekler: {
+        "GET /api/karbon/hesapla": "http://localhost:3001/api/karbon/hesapla?sehir=Istanbul&tasima=hava&urun=kilim",
+        "GET /api/doviz/guncel": "http://localhost:3001/api/doviz/guncel",
+        "GET /api/doviz/haftalik": "http://localhost:3001/api/doviz/haftalik",
+        "GET /api/doviz/cevirici": "http://localhost:3001/api/doviz/cevirici?miktar=5000&hedef=eur",
+        "GET /api/cografya/koordinat": "http://localhost:3001/api/cografya/koordinat?sehir=Ankara",
+        "GET /api/cografya/atolyeler": "http://localhost:3001/api/cografya/atolyeler?sehir=Istanbul&tip=kilim&limit=5",
+        "GET /api/cografya/mesafe": "http://localhost:3001/api/cografya/mesafe?sehir1=Istanbul&sehir2=Ankara",
+        "GET /api/bonus/zincir": "http://localhost:3001/api/bonus/zincir?sehir=Berlin&tasima=kara&urun=comlek",
+        "POST /api/doviz/yenile": "http://localhost:3001/api/doviz/yenile (POST isteği, body boş)",
+      },
     },
   });
 });
