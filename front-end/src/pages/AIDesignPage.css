@@ -4,24 +4,17 @@
 
 .ai-page {
   min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   background: var(--c-bg);
   display: flex;
   flex-direction: column;
   font-family: 'Inter', sans-serif;
+  padding-top: var(--navbar-h);
 }
 
-/* ── Navbar ── */
-.ai-page__nav-outer {
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  background: #faf8f5;
-  border-bottom: 1px solid #e8ddd6;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* ── Navbar (artık App.jsx'te) ── */
+.ai-page__nav-outer { display: none; }
 
 .ai-page__nav {
   width: 100%;

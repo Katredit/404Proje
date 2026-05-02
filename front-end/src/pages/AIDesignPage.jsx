@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import './AIDesignPage.css';
 
 const AI_API_URL = ''; // API URL buraya eklenecek
@@ -78,31 +77,6 @@ export default function AIDesignPage({ onBack, onNavigate }) {
 
   return (
     <div className="ai-page">
-
-      {/* ── Navbar ── */}
-      <div className="ai-page__nav-outer">
-        <header className="ai-page__nav">
-          <div className="ai-page__brand" onClick={() => navigate('market')}>
-            {t('nav.brand')}
-          </div>
-          <nav className="ai-page__nav-links">
-            <button className="ai-page__nav-link" onClick={() => navigate('market')}>{t('nav.market')}</button>
-            <button className="ai-page__nav-link ai-page__nav-link--active">{t('nav.ai')}</button>
-            <button className="ai-page__nav-link" onClick={() => navigate('seller')}>{t('nav.seller')}</button>
-          </nav>
-          <div className="ai-page__nav-actions">
-            <div className="ai-page__nav-search">
-              <span className="ms">search</span>
-              <input type="text" placeholder={t('nav.search')} />
-            </div>
-            <button className="ai-page__nav-icon-btn"><span className="ms">shopping_basket</span></button>
-            <button className="ai-page__nav-icon-btn"><span className="ms">person</span></button>
-            <LanguageSwitcher />
-          </div>
-        </header>
-      </div>
-
-      {/* ── Body ── */}
       <div className="ai-page__body">
 
         {/* Sol panel */}

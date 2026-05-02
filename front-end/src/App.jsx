@@ -46,7 +46,7 @@ function App() {
     setActivePage('market');
   };
 
-  // Mağaza sayfasında isek
+  // Mağaza sayfasında isek (kendi navbar'ı var)
   if (visitingStore) {
     return (
       <div className="app">
@@ -58,30 +58,9 @@ function App() {
     );
   }
 
-  // Yapay Zeka Tasarım sayfası
-  if (activePage === 'ai') {
-    return (
-      <div className="app">
-        <AIDesignPage onBack={() => setActivePage('market')} onNavigate={setActivePage} />
-      </div>
-    );
-  }
-
-  // Satıcı Ol sayfası
-  if (activePage === 'seller') {
-    return (
-      <div className="app">
-        <SellerPage
-          onBack={() => setActivePage('market')}
-          onSubmit={handleAddSeller}
-          onNavigate={setActivePage}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="app">
+      {/* ── Her sayfada ortak navbar ── */}
       <div className="navbar-outer">
         <header className="navbar">
           <div className="navbar__brand" onClick={() => setActivePage('market')}>
@@ -114,7 +93,22 @@ function App() {
         </header>
       </div>
 
-      <main className="main">
+      {/* ── AI Tasarım sayfası ── */}
+      {activePage === 'ai' && (
+        <AIDesignPage onBack={() => setActivePage('market')} onNavigate={setActivePage} />
+      )}
+
+      {/* ── Satıcı Ol sayfası ── */}
+      {activePage === 'seller' && (
+        <SellerPage
+          onBack={() => setActivePage('market')}
+          onSubmit={handleAddSeller}
+          onNavigate={setActivePage}
+        />
+      )}
+
+      {/* ── Çarşı sayfası ── */}
+      {activePage === 'market' && <main className="main">
         <button
           className={`sidebar-toggle${sidebarOpen ? ' sidebar-toggle--open' : ''}`}
           onClick={() => setSidebarOpen((v) => !v)}
@@ -165,7 +159,7 @@ function App() {
             />
           </div>
         )}
-      </main>
+      </main>}
     </div>
   );
 }

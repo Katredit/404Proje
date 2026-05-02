@@ -1,4 +1,9 @@
 .lang-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-switcher__toggle {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -14,7 +19,7 @@
   transition: background 0.2s, border-color 0.2s;
 }
 
-.lang-switcher:hover {
+.lang-switcher__toggle:hover {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.45);
 }
@@ -28,3 +33,58 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+.lang-switcher__arrow {
+  font-size: 9px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.lang-switcher__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 150px;
+  background: #1a1a2e;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 4px 0;
+  margin: 0;
+  list-style: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.lang-switcher__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.lang-switcher__option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-switcher__option--active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 600;
+}
+
+.lang-switcher__native {
+  flex: 1;
+}
+
+.lang-switcher__code {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.55;
+  letter-spacing: 0.5px;
+}
+

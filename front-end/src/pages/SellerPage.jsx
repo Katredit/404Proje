@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import './SellerPage.css';
 
 const CATEGORY_DEFS = [
@@ -107,11 +106,6 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
   if (submitted) {
     return (
       <div className="seller-page">
-        <div className="seller-page__nav-outer">
-          <header className="seller-page__nav">
-            <div className="seller-page__brand" onClick={() => navigate('market')}>{t('nav.brand')}</div>
-          </header>
-        </div>
         <div className="seller-page__success">
           <div className="seller-page__success-icon">🎉</div>
           <h2>{t('seller.successTitle')}</h2>
@@ -128,23 +122,6 @@ export default function SellerPage({ onBack, onSubmit, onNavigate }) {
 
   return (
     <div className="seller-page">
-
-      {/* ── Navbar ── */}
-      <div className="seller-page__nav-outer">
-        <header className="seller-page__nav">
-          <div className="seller-page__brand" onClick={() => navigate('market')}>{t('nav.brand')}</div>
-          <nav className="seller-page__nav-links">
-            <button className="seller-page__nav-link" onClick={() => navigate('market')}>{t('nav.market')}</button>
-            <button className="seller-page__nav-link" onClick={() => navigate('ai')}>{t('nav.ai')}</button>
-            <button className="seller-page__nav-link seller-page__nav-link--active">{t('nav.seller')}</button>
-          </nav>
-          <div className="seller-page__nav-actions">
-            <button className="seller-page__nav-icon-btn"><span className="ms">shopping_basket</span></button>
-            <button className="seller-page__nav-icon-btn"><span className="ms">person</span></button>
-            <LanguageSwitcher />
-          </div>
-        </header>
-      </div>
 
       <main className="seller-page__main">
 
