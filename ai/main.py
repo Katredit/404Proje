@@ -368,18 +368,9 @@ def saglik():
     return jsonify({"durum": "çalışıyor"})
 
 
-
 if __name__ == "__main__":
     print("KapadokyaCraft API başlatılıyor...")
-    priPI başlatılıyor...
-Endpoint: POST http://localhost:5000/uret
- * Serving Flask app '__main__'
- * Debug mode: off
-INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:5000
- * Running on http://172.28.0.12:5000
-INFO:werkzeug:Press CTRL+C to quitnt("Endpoint: POST http://localhost:5000/uret")
+    print("Endpoint: POST http://localhost:5000/uret")
     app.run(host="0.0.0.0", port=5000, debug=False)
     #-------------------------------------------------------------------------
 # Mevcut kodun ALTINA ekle:
