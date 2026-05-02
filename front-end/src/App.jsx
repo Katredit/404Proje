@@ -6,17 +6,23 @@ import StoreListSidebar from './components/StoreListSidebar';
 import StoreDetailPage from './pages/StoreDetailPage';
 import AIDesignPage from './pages/AIDesignPage';
 import SellerPage from './pages/SellerPage';
+import SellerDashboard from './pages/SellerDashboard';
+import AuthPage from './pages/AuthPage';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import CurrencyRateBadge from './components/CurrencyRateBadge';
 import { stores as staticStores, positions as storePositions } from './data/stores';
+import { useAuth } from './context/AuthContext';
 import './App.css';
 
 function App() {
   const { t } = useTranslation();
+  const { user, loading: authLoading, logout } = useAuth();
   const [selectedStore, setSelectedStore] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller'
+  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller' | 'dashboard'
   const [visitingStore, setVisitingStore] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
 
   // Dinamik satıcılar: localStorage'dan yükle
   const [dynamicStores, setDynamicStores] = useState(() => {
@@ -29,7 +35,7 @@ function App() {
   // Tüm mağazalar = statik + dinamik
   const allStores = [...staticStores, ...dynamicStores];
 
-  // Yeni satıcı ekle
+  // Yeni satıcı ekle (eski localStorage tabanlı akış için)
   const handleAddSeller = (sellerData) => {
     const newStore = {
       ...sellerData,
@@ -58,6 +64,8 @@ function App() {
     );
   }
 
+  const hasSeller = !!user?.store;
+
   return (
     <div className="app">
       {/* ── Her sayfada ortak navbar ── */}
@@ -79,32 +87,80 @@ function App() {
               className={`navbar__link${activePage === 'ai' ? ' navbar__link--active' : ''}`}
               onClick={() => setActivePage('ai')}
             >{t('nav.aiLong')}</button>
-            <button
-              className={`navbar__link${activePage === 'seller' ? ' navbar__link--active' : ''}`}
-              onClick={() => setActivePage('seller')}
-            >{t('nav.seller')}</button>
+            {/* Satıcı ol: sadece giriş yapmış ve henüz dükkanı olmayan kullanıcılara */}
+            {user && !hasSeller && (
+              <button
+                className={`navbar__link${activePage === 'seller' ? ' navbar__link--active' : ''}`}
+                onClick={() => setActivePage('seller')}
+              >{t('nav.seller')}</button>
+            )}
+            {/* Dükkanım: dükkanı olan kullanıcılara */}
+            {user && hasSeller && (
+              <button
+                className={`navbar__link${activePage === 'dashboard' ? ' navbar__link--active' : ''}`}
+                onClick={() => setActivePage('dashboard')}
+              >
+                <span className="ms" style={{ fontSize: 16, verticalAlign: 'middle' }}>storefront</span>{' '}
+                Dükkanım
+              </button>
+            )}
           </nav>
           <div className="navbar__actions">
             <button className="navbar__btn navbar__btn--icon"><span className="ms">search</span></button>
             <button className="navbar__btn navbar__btn--icon"><span className="ms">shopping_basket</span></button>
-            <button className="navbar__btn navbar__btn--primary">{t('nav.login')}</button>
+
+            {authLoading ? null : user ? (
+              <div className="navbar__user">
+                <span className="navbar__user-name">{user.name}</span>
+                <button className="navbar__btn navbar__btn--outline" onClick={logout}>Çıkış</button>
+              </div>
+            ) : (
+              <button className="navbar__btn navbar__btn--primary" onClick={() => setShowAuth(true)}>
+                {t('nav.login')}
+              </button>
+            )}
+            <CurrencyRateBadge />
             <LanguageSwitcher />
           </div>
         </header>
       </div>
+
+      {/* ── Auth Modal ── */}
+      {showAuth && <AuthPage onClose={() => setShowAuth(false)} />}
 
       {/* ── AI Tasarım sayfası ── */}
       {activePage === 'ai' && (
         <AIDesignPage onBack={() => setActivePage('market')} onNavigate={setActivePage} />
       )}
 
-      {/* ── Satıcı Ol sayfası ── */}
-      {activePage === 'seller' && (
+      {/* ── Satıcı Ol sayfası (dükkanı olmayan giriş yapmış kullanıcılar) ── */}
+      {activePage === 'seller' && user && !hasSeller && (
         <SellerPage
           onBack={() => setActivePage('market')}
           onSubmit={handleAddSeller}
           onNavigate={setActivePage}
         />
+      )}
+
+      {/* ── Satıcı Dashboard (dükkanı olan kullanıcılar) ── */}
+      {activePage === 'dashboard' && user && (
+        <main className="main main--full">
+          <SellerDashboard />
+        </main>
+      )}
+
+      {/* ── Satıcı Ol sayfasına erişim — giriş gerekilir ── */}
+      {activePage === 'seller' && !user && (
+        <main className="main main--full">
+          <div className="app-auth-gate">
+            <span className="ms app-auth-gate__icon">storefront</span>
+            <h2>Satıcı olmak için giriş yapın</h2>
+            <p>Dükkan açmak ve ürün satmak için hesabınıza giriş yapın.</p>
+            <button className="navbar__btn navbar__btn--primary" onClick={() => setShowAuth(true)}>
+              Giriş Yap / Kayıt Ol
+            </button>
+          </div>
+        </main>
       )}
 
       {/* ── Çarşı sayfası ── */}
@@ -165,3 +221,4 @@ function App() {
 }
 
 export default App;
+

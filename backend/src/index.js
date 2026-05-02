@@ -6,6 +6,8 @@ const carbonRouter = require("./routes/carbon");
 const dovizRouter = require("./routes/doviz");
 const cografyaRouter = require("./routes/cografya");
 const bonusRouter = require("./routes/bonus");
+const authRouter = require("./routes/auth");
+const storeRouter = require("./routes/store");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,6 +23,8 @@ app.use((req, _res, next) => {
 });
 
 // ─── Routes ──────────────────────────────────────────────────
+app.use("/api/auth", authRouter);           // Auth (register/login/me)
+app.use("/api/stores", storeRouter);        // Dükkanlar + Ürünler
 app.use("/api/karbon", carbonRouter);   // Kural 1
 app.use("/api/doviz", dovizRouter);     // Kural 2
 app.use("/api/cografya", cografyaRouter); // Kural 3

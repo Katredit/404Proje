@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useTranslatedStore } from '../hooks/useTranslatedStore';
+import { useCurrencyPrice } from '../hooks/useCurrencyPrice';
 
 function StorePanel({ store: rawStore, onClose, onVisit }) {
   const { t } = useTranslation();
   const store = useTranslatedStore(rawStore);
+  const { format } = useCurrencyPrice();
   if (!store) return null;
 
   const bgColor = store.accentColor ? store.accentColor + '22' : '#fce4cc';
@@ -51,6 +53,7 @@ function StorePanel({ store: rawStore, onClose, onVisit }) {
                   {p.type === 'kilim' ? '🧶' : p.type === 'ceramic' ? '🏺' : '📦'}
                 </div>
                 <div className="store-panel__product-name">{p.name}</div>
+                <div className="store-panel__product-price">{format(p.price)}</div>
               </div>
             ))}
           </div>

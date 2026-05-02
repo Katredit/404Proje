@@ -6,6 +6,12 @@ const cache = new NodeCache({ stdTTL: 300 });
 
 const TCMB_XML = "https://www.tcmb.gov.tr/kurlar/today.xml";
 
+function normalize(kurObj) {
+  const unit = parseInt(kurObj.$.Unit || "1", 10);
+  const satis = parseFloat(kurObj.ForexSelling[0].replace(",", "."));
+  return parseFloat((satis / unit).toFixed(6));
+}
+
 async function tcmbKurCek() {
   const cached = cache.get("tcmb_kur");
   if (cached) return cached;
@@ -21,14 +27,22 @@ async function tcmbKurCek() {
   const usdKur = bul("USD");
   const eurKur = bul("EUR");
   const gbpKur = bul("GBP");
+  const jpyKur = bul("JPY");
+  const rubKur = bul("RUB");
+  const cnyKur = bul("CNY");
+  const krwKur = bul("KRW");
 
   const kur = {
-    usd: parseFloat(usdKur.ForexSelling[0].replace(",", ".")),
-    eur: parseFloat(eurKur.ForexSelling[0].replace(",", ".")),
-    gbp: parseFloat(gbpKur.ForexSelling[0].replace(",", ".")),
+    usd: normalize(usdKur),
+    eur: normalize(eurKur),
+    gbp: normalize(gbpKur),
+    jpy: jpyKur ? normalize(jpyKur) : null,
+    rub: rubKur ? normalize(rubKur) : null,
+    cny: cnyKur ? normalize(cnyKur) : null,
+    krw: krwKur ? normalize(krwKur) : null,
     guncellemeZamani: new Date().toISOString(),
     kaynak: "TCMB",
-    paraBirimleri: "USD/TRY · EUR/TRY · GBP/TRY",
+    paraBirimleri: "USD/TRY · EUR/TRY · GBP/TRY · JPY/TRY · RUB/TRY · CNY/TRY · KRW/TRY",
     mod: "canli",
   };
 
@@ -52,6 +66,10 @@ async function tcmbKurGecmisi(gunSayisi = 7) {
     usd: bugunKur.usd,
     eur: bugunKur.eur,
     gbp: bugunKur.gbp,
+    jpy: bugunKur.jpy,
+    rub: bugunKur.rub,
+    cny: bugunKur.cny,
+    krw: bugunKur.krw,
   }));
 
   return {
