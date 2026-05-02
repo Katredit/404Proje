@@ -7,10 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1McvwpgE9iLh8_R0kYK5QREWZAg3p5uMj
 """
 
-!pip install groq pillow numpy requests -q
-!pip install groq pillow numpy requests diffusers transformers accelerate -q
-!pip install flask-cors -q
-
 import os
 os.environ["GROQ_API_KEY"] = "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"
 os.environ["HF_TOKEN"] = "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"
