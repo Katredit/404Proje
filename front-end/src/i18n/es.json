@@ -156,6 +156,17 @@
       "white": "Blanco"
     }
   },
+  "modal": {
+    "hint": "🖱️ Arrastra: rotar · ⚙️ Scroll: zoom · 📐 Ejes abajo a la derecha",
+    "material": "Material",
+    "size": "Tamaño",
+    "height": "Altura",
+    "pieces": "Piezas",
+    "stock": "Stock",
+    "stockUnit": "uds",
+    "colors": "Colores",
+    "addToFav": "Agregar a Favoritos"
+  },
   "lang": {
     "tr": "Türkçe",
     "en": "English",

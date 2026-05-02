@@ -156,6 +156,17 @@
       "white": "白色"
     }
   },
+  "modal": {
+    "hint": "🖱️ 拖动: 旋转 · ⚙️ 滚动: 缩放 · 📐 坐标轴在右下角",
+    "material": "材质",
+    "size": "尺寸",
+    "height": "高度",
+    "pieces": "部件",
+    "stock": "库存",
+    "stockUnit": "件",
+    "colors": "颜色",
+    "addToFav": "加入收藏"
+  },
   "lang": {
     "tr": "Türkçe",
     "en": "English",

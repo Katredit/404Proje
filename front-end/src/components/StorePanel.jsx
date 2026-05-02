@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { useTranslatedStore } from '../hooks/useTranslatedStore';
 
-function StorePanel({ store, onClose, onVisit }) {
+function StorePanel({ store: rawStore, onClose, onVisit }) {
   const { t } = useTranslation();
+  const store = useTranslatedStore(rawStore);
   if (!store) return null;
 
   const bgColor = store.accentColor ? store.accentColor + '22' : '#fce4cc';

@@ -156,6 +156,17 @@
       "white": "하양"
     }
   },
+  "modal": {
+    "hint": "🖱️ 드래그: 회전 · ⚙️ 스크롤: 확대/축소 · 📐 좌표축은 우측 하단",
+    "material": "소재",
+    "size": "크기",
+    "height": "높이",
+    "pieces": "부품",
+    "stock": "재고",
+    "stockUnit": "개",
+    "colors": "색상",
+    "addToFav": "즐겨찾기 추가"
+  },
   "lang": {
     "tr": "Türkçe",
     "en": "English",

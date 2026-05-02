@@ -156,6 +156,17 @@
       "white": "Blanc"
     }
   },
+  "modal": {
+    "hint": "🖱️ Glisser: tourner · ⚙️ Scroll: zoom · 📐 Axes en bas à droite",
+    "material": "Matériau",
+    "size": "Taille",
+    "height": "Hauteur",
+    "pieces": "Pièces",
+    "stock": "Stock",
+    "stockUnit": "pcs",
+    "colors": "Couleurs",
+    "addToFav": "Ajouter aux Favoris"
+  },
   "lang": {
     "tr": "Türkçe",
     "en": "English",

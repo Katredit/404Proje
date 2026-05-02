@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Product3DModal from '../components/Product3DModal';
+import { useTranslatedStore } from '../hooks/useTranslatedStore';
 import './StoreDetail.css';
 
 const CATEGORY_ICONS = { kilim: '🧶', ceramic: '🏺', other: '📦' };
@@ -68,9 +69,12 @@ function ProductCard({ product, store, onView3D }) {
   );
 }
 
-function StoreDetailPage({ store, onBack }) {
+function StoreDetailPage({ store: rawStore, onBack }) {
   const { t } = useTranslation();
+  const store = useTranslatedStore(rawStore);
   const [activeProduct, setActiveProduct] = useState(null);
+
+  if (!store) return null;
 
   return (
     <div className="store-detail">

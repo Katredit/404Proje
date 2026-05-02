@@ -156,6 +156,17 @@
       "white": "白"
     }
   },
+  "modal": {
+    "hint": "🖱️ ドラッグ: 回転 · ⚙️ スクロール: ズーム · 📐 軸は右下",
+    "material": "素材",
+    "size": "サイズ",
+    "height": "高さ",
+    "pieces": "パーツ",
+    "stock": "在庫",
+    "stockUnit": "点",
+    "colors": "カラー",
+    "addToFav": "お気に入りに追加"
+  },
   "lang": {
     "tr": "Türkçe",
     "en": "English",

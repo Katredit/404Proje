@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useTranslatedStores } from '../hooks/useTranslatedStore';
 
 const CAT_ICONS = {
   'Kilim': 'grid_view',
@@ -17,8 +18,9 @@ function getCatIcon(category) {
   return CAT_ICONS.default;
 }
 
-function StoreListSidebar({ stores, selectedStore, onSelectStore, hoveredId, onHover }) {
+function StoreListSidebar({ stores: rawStores, selectedStore, onSelectStore, hoveredId, onHover }) {
   const { t } = useTranslation();
+  const stores = useTranslatedStores(rawStores);
   return (
     <div className="sidebar">
       <div className="sidebar__header">

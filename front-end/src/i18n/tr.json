@@ -156,6 +156,17 @@
       "white": "Beyaz"
     }
   },
+  "modal": {
+    "hint": "🖱️ Sürükle: döndür · ⚙️ Scroll: zoom · 📐 Eksenler sağ altta",
+    "material": "Malzeme",
+    "size": "Boyut",
+    "height": "Yükseklik",
+    "pieces": "Parça",
+    "stock": "Stok",
+    "stockUnit": "adet",
+    "colors": "Renkler",
+    "addToFav": "Favorilere Ekle"
+  },
   "lang": {
     "tr": "Türkçe",
     "en": "English",
