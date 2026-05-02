@@ -69,7 +69,7 @@ function App() {
   if (activePage === 'ai') {
     return (
       <div className="app">
-        <AIDesignPage onBack={() => setActivePage('market')} />
+        <AIDesignPage onBack={() => setActivePage('market')} onNavigate={setActivePage} />
       </div>
     );
   }
@@ -81,6 +81,7 @@ function App() {
         <SellerPage
           onBack={() => setActivePage('market')}
           onSubmit={handleAddSeller}
+          onNavigate={setActivePage}
         />
       </div>
     );
