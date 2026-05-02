@@ -3,9 +3,6 @@ import {
   OrbitControls,
   Sky,
   Stars,
-  Environment,
-  Grid,
-  ContactShadows,
 } from '@react-three/drei';
 import { Suspense, useRef } from 'react';
 import StoreBuilding from './StoreBuilding';
@@ -45,21 +42,6 @@ function Scene({ selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
       {/* GLB Zemin modeli */}
       <GroundModel />
 
-      {/* Grid çizgisi */}
-      <Grid
-        args={[80, 80]}
-        position={[0, -0.99, 0]}
-        cellSize={2}
-        cellThickness={0.3}
-        cellColor="#B8A888"
-        sectionSize={8}
-        sectionThickness={0.8}
-        sectionColor="#9E8B6E"
-        fadeDistance={50}
-        fadeStrength={1.5}
-        followCamera={false}
-        infiniteGrid={false}
-      />
 
       {/* Zemin süslemeleri */}
       <GroundDecor />
@@ -76,14 +58,6 @@ function Scene({ selectedStore, setSelectedStore, hoveredId, setHoveredId }) {
         />
       ))}
 
-      {/* Temas gölgesi */}
-      <ContactShadows
-        position={[0, -0.98, 0]}
-        opacity={0.35}
-        scale={40}
-        blur={2}
-        far={10}
-      />
 
       {/* Kamera kontrolü */}
       <OrbitControls
@@ -106,7 +80,8 @@ function MarketScene({ selectedStore, setSelectedStore, hoveredId, setHoveredId 
     <Canvas
       shadows
       camera={{ position: [0, 12, 20], fov: 55 }}
-      gl={{ antialias: true, alpha: false }}
+      gl={{ antialias: true, alpha: true }}
+      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
       style={{ width: '100%', height: '100%' }}
     >
       <Suspense fallback={null}>

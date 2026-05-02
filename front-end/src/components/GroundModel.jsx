@@ -1,13 +1,12 @@
 import { useGLTF } from '@react-three/drei';
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import groundUrl from '../assets/zindanonu_duz2.glb';
 
 function GroundModel() {
   const { scene } = useGLTF(groundUrl);
 
-  const clonedScene = useMemo(() => SkeletonUtils.clone(scene), [scene]);
+  const clonedScene = useMemo(() => scene.clone(true), [scene]);
 
   // Modelin üst yüzeyini Y=-1'e (mağaza zemin seviyesi) hizala
   const offsetY = useMemo(() => {
@@ -19,7 +18,7 @@ function GroundModel() {
   useMemo(() => {
     clonedScene.traverse((child) => {
       if (child.isMesh) {
-        child.receiveShadow = true;
+        child.receiveShadow = false;
         child.castShadow = false;
       }
     });
@@ -28,7 +27,8 @@ function GroundModel() {
   return (
     <primitive
       object={clonedScene}
-      position={[0, offsetY, 0]}
+      position={[-30, -6, 45]}
+      rotation={[0.045, 0, -0.05]}
     />
   );
 }
