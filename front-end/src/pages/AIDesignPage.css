@@ -4,6 +4,9 @@
 
 .ai-page {
   min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--c-bg);
   display: flex;
   flex-direction: column;
@@ -815,3 +818,89 @@
   transition: color 0.15s;
 }
 .ai-page__footer-link:hover { color: var(--c-secondary-ct); }
+
+/* ── Özel Sipariş Paneli ── */
+.ai-page__order-panel {
+  margin-top: 16px;
+  background: linear-gradient(135deg, #2c1810 0%, #4a2810 100%);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: #fff;
+}
+
+.ai-page__order-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.ai-page__order-panel__desc {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.75);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ai-page__order-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #c0764a, #e09060);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  width: 100%;
+}
+.ai-page__order-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.ai-page__order-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-page__order-success {
+  margin-top: 16px;
+  background: #efffef;
+  border: 1px solid #a8d5a2;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #27ae60;
+}
+
+.ai-page__order-success .ms {
+  font-size: 28px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ai-page__order-success strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  color: #1e8449;
+}
+
+.ai-page__order-success p {
+  font-size: 0.82rem;
+  color: #555;
+  margin: 0;
+}
+

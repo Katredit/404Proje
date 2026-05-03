@@ -573,6 +573,102 @@
   padding-top: 8px;
 }
 
+/* =======================================
+   DELIVERY ETA CARD
+   ======================================= */
+
+.delivery-eta-card {
+  border-radius: 14px;
+  border: 1.5px solid #e5d9cc;
+  padding: 16px;
+  background: #fbf5ef;
+  animation: carbonFadeIn 0.4s ease;
+}
+
+.delivery-eta-card--loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9a7e68;
+  font-size: 13px;
+  border-color: #eadbcf;
+  background: #fff9f3;
+}
+
+.delivery-eta-card--error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9a8880;
+  border-color: #e0d0c8;
+  background: #faf6f3;
+}
+
+.delivery-eta-card__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e7d8cb;
+  border-top-color: #b96a45;
+  border-radius: 50%;
+  animation: carbonSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.delivery-eta-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.delivery-eta-card__icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.delivery-eta-card__title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.delivery-eta-card__badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 20px;
+  padding: 2px 8px;
+  margin-top: 3px;
+}
+
+.delivery-eta-card__big {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.delivery-eta-card__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delivery-eta-card__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #7a6556;
+}
+
+.delivery-eta-card__row strong {
+  font-weight: 600;
+  color: #3a2f29;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .checkout-layout {

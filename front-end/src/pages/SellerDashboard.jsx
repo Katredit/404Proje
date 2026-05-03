@@ -6,6 +6,29 @@ import api from "../services/api";
 
 import "./SellerDashboard.css";
 
+const API_BASE = "http://localhost:3001";
+
+const PRODUCT_TYPE_OPTIONS = [
+  { value: "kilim", label: "Kilim / Halı", icon: "grid_view" },
+  { value: "ceramic", label: "Seramik / Çömlek", icon: "local_dining" },
+  { value: "stone", label: "Taş / Takı", icon: "diamond" },
+  { value: "wood", label: "Ahşap El Sanatı", icon: "forest" },
+  { value: "metal", label: "Metal / Bakır", icon: "construction" },
+  { value: "textile", label: "Tekstil / Kumaş", icon: "checkroom" },
+  { value: "glass", label: "Cam / Kristal", icon: "water_drop" },
+  { value: "leather", label: "Deri El Sanatı", icon: "style" },
+  { value: "spice", label: "Baharat / Gıda", icon: "nutrition" },
+  { value: "painting", label: "Resim / Sanat", icon: "palette" },
+  { value: "other", label: "Diğer", icon: "inventory_2" },
+];
+
+const PRODUCT_TYPE_ICONS = PRODUCT_TYPE_OPTIONS.reduce((acc, item) => {
+  acc[item.value] = item.icon;
+  return acc;
+}, {});
+
+const resolvePhotoUrl = (photo) => (photo?.startsWith("http") ? photo : `${API_BASE}${photo}`);
+
 
 
 const CATEGORY_DEFS = [
@@ -436,15 +459,50 @@ function ProductForm({ storeId, product, onSaved, onCancel }) {
 
     size: product?.size || "",
 
+    photo: product?.photo || "",
+
   });
 
   const [error, setError] = useState("");
 
   const [loading, setLoading] = useState(false);
 
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
 
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const photoPreview = form.photo
+    ? resolvePhotoUrl(form.photo)
+    : null;
+
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Fotoğraf boyutu en fazla 5 MB olabilir.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("photo", file);
+
+    setUploadingPhoto(true);
+    setError("");
+    try {
+      const res = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      set("photo", res.data.url);
+    } catch (err) {
+      setError(err.response?.data?.hata || "Fotoğraf yüklenemedi.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
 
 
@@ -518,11 +576,11 @@ function ProductForm({ storeId, product, onSaved, onCancel }) {
 
             <select className="pform-input" value={form.type} onChange={(e) => set("type", e.target.value)}>
 
-              <option value="kilim">Kilim / Halı</option>
+              {PRODUCT_TYPE_OPTIONS.map((type) => (
 
-              <option value="ceramic">Seramik / Çömlek</option>
+                <option key={type.value} value={type.value}>{type.label}</option>
 
-              <option value="other">Diğer</option>
+              ))}
 
             </select>
 
@@ -570,17 +628,77 @@ function ProductForm({ storeId, product, onSaved, onCancel }) {
 
         </div>
 
+        <div className="pform-field pform-field--full">
+
+          <label className="pform-label">Ürün Fotoğrafı</label>
+
+          <div className="pform-photo-upload">
+
+            {photoPreview ? (
+
+              <div className="pform-photo-preview">
+
+                <img src={photoPreview} alt={form.name || "Ürün fotoğrafı"} />
+
+                <button
+
+                  type="button"
+
+                  className="pform-photo-remove"
+
+                  onClick={() => set("photo", "")}
+
+                  aria-label="Fotoğrafı kaldır"
+
+                >
+
+                  <span className="ms">close</span>
+
+                </button>
+
+              </div>
+
+            ) : (
+
+              <label className="pform-photo-drop" htmlFor={`pform-photo-${storeId}-${product?.id || "new"}`}>
+
+                <span className="ms">add_a_photo</span>
+
+                <span>{uploadingPhoto ? "Yükleniyor..." : "Fotoğraf seçmek için tıklayın"}</span>
+
+              </label>
+
+            )}
+
+            <input
+
+              id={`pform-photo-${storeId}-${product?.id || "new"}`}
+
+              type="file"
+
+              accept="image/png,image/jpeg,image/webp,image/gif"
+
+              onChange={handlePhotoSelect}
+
+              style={{ display: "none" }}
+
+            />
+
+          </div>
+
+        </div>
+
         {error && <div className="pform-error">{error}</div>}
 
         <div className="pform-actions">
 
           <button type="button" className="sdash-btn sdash-btn--ghost" onClick={onCancel}>İptal</button>
 
-          <button type="submit" className="sdash-btn sdash-btn--primary" disabled={loading}>
+          <button type="submit" className="sdash-btn sdash-btn--primary" disabled={loading || uploadingPhoto}>
 
             <span className="ms">{product ? "save" : "add_circle"}</span>
 
-            {loading ? "Kaydediliyor…" : product ? "Kaydet" : "Ürün Ekle"}
+            {loading || uploadingPhoto ? "Kaydediliyor…" : product ? "Kaydet" : "Ürün Ekle"}
 
           </button>
 
@@ -799,11 +917,19 @@ export default function SellerDashboard() {
 
                   <div className="sdash-product-thumb">
 
-                    <span className="ms sdash-product-thumb__icon">
+                    {p.photo ? (
 
-                      {p.type === "kilim" ? "grid_view" : p.type === "ceramic" ? "local_dining" : "redeem"}
+                      <img src={resolvePhotoUrl(p.photo)} alt={p.name} className="sdash-product-thumb__img" />
 
-                    </span>
+                    ) : (
+
+                      <span className="ms sdash-product-thumb__icon">
+
+                        {PRODUCT_TYPE_ICONS[p.type] || "inventory_2"}
+
+                      </span>
+
+                    )}
 
                     {p.stock === 0 && <div className="sdash-product-thumb__sold-out"><span>Tükendi</span></div>}
 

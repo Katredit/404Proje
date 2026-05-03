@@ -9,6 +9,7 @@ const bonusRouter = require("./routes/bonus");
 const authRouter = require("./routes/auth");
 const storeRouter = require("./routes/store");
 const uploadRouter = require("./routes/upload");
+const customOrdersRouter = require("./routes/customOrders");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +29,7 @@ app.use((req, _res, next) => {
 app.use("/api/auth", authRouter);           // Auth (register/login/me)
 app.use("/api/stores", storeRouter);        // Dükkanlar + Ürünler
 app.use("/api/upload", uploadRouter);       // Görsel yükleme
+app.use("/api/custom-orders", customOrdersRouter); // Özel siparişler
 app.use("/api/karbon", carbonRouter);   // Kural 1
 app.use("/api/doviz", dovizRouter);     // Kural 2
 app.use("/api/cografya", cografyaRouter); // Kural 3
@@ -46,6 +48,7 @@ app.get("/", (_req, res) => {
       "GET /api/cografya/koordinat": "Kural 3 – Şehir → koordinat",
       "GET /api/cografya/atolyeler": "Kural 3 – Yakın atölye listesi",
       "GET /api/cografya/mesafe":    "Kural 3 – Şehirler arası mesafe",
+      "GET /api/cografya/tahmini-teslimat": "Kural 3 – Adrese göre tahmini teslimat süresi",
       "GET /api/bonus/zincir":       "Bonus – Mesafe + CO₂ + Döviz zinciri",
       "POST /api/doviz/yenile":      "Kural 2 – Kur verisini yenile",
     },
@@ -59,6 +62,7 @@ app.get("/", (_req, res) => {
         "GET /api/cografya/koordinat": "http://localhost:3001/api/cografya/koordinat?sehir=Ankara",
         "GET /api/cografya/atolyeler": "http://localhost:3001/api/cografya/atolyeler?sehir=Istanbul&tip=kilim&limit=5",
         "GET /api/cografya/mesafe": "http://localhost:3001/api/cografya/mesafe?sehir1=Istanbul&sehir2=Ankara",
+        "GET /api/cografya/tahmini-teslimat": "http://localhost:3001/api/cografya/tahmini-teslimat?adres=Kadikoy,Istanbul,Turkey&tasima=kara",
         "GET /api/bonus/zincir": "http://localhost:3001/api/bonus/zincir?sehir=Berlin&tasima=kara&urun=comlek",
         "POST /api/doviz/yenile": "http://localhost:3001/api/doviz/yenile (POST isteği, body boş)",
       },

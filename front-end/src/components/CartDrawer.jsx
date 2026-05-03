@@ -2,7 +2,21 @@ import { useCart } from '../context/CartContext';
 import { useCurrencyPrice } from '../hooks/useCurrencyPrice';
 import './CartDrawer.css';
 
-const CATEGORY_ICONS = { kilim: '🧶', ceramic: '🏺', other: '📦' };
+const API_BASE = 'http://localhost:3001';
+const resolvePhotoUrl = (photo) => (photo?.startsWith('http') ? photo : `${API_BASE}${photo}`);
+const CATEGORY_ICONS = {
+  kilim: '🧶',
+  ceramic: '🏺',
+  stone: '💎',
+  wood: '🪵',
+  metal: '⚒️',
+  textile: '🧵',
+  glass: '🔮',
+  leather: '👜',
+  spice: '🫙',
+  painting: '🖼️',
+  other: '📦',
+};
 
 function CartItem({ item }) {
   const { removeItem, updateQuantity } = useCart();
@@ -16,7 +30,11 @@ function CartItem({ item }) {
   return (
     <div className="cart-item">
       <div className="cart-item__thumb" style={previewStyle}>
-        <span>{CATEGORY_ICONS[product.type] || '📦'}</span>
+        {product.photo ? (
+          <img src={resolvePhotoUrl(product.photo)} alt={product.name} className="cart-item__thumb-img" />
+        ) : (
+          <span>{CATEGORY_ICONS[product.type] || '📦'}</span>
+        )}
       </div>
       <div className="cart-item__info">
         <p className="cart-item__name">{product.name}</p>

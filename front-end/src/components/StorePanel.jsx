@@ -2,6 +2,22 @@ import { useTranslation } from 'react-i18next';
 import { useTranslatedStore } from '../hooks/useTranslatedStore';
 import { useCurrencyPrice } from '../hooks/useCurrencyPrice';
 
+const API_BASE = 'http://localhost:3001';
+const resolvePhotoUrl = (photo) => (photo?.startsWith('http') ? photo : `${API_BASE}${photo}`);
+const CATEGORY_ICONS = {
+  kilim: '🧶',
+  ceramic: '🏺',
+  stone: '💎',
+  wood: '🪵',
+  metal: '⚒️',
+  textile: '🧵',
+  glass: '🔮',
+  leather: '👜',
+  spice: '🫙',
+  painting: '🖼️',
+  other: '📦',
+};
+
 function StorePanel({ store: rawStore, onClose, onVisit }) {
   const { t } = useTranslation();
   const store = useTranslatedStore(rawStore);
@@ -50,7 +66,11 @@ function StorePanel({ store: rawStore, onClose, onVisit }) {
                   className="store-panel__product-img"
                   style={{ background: (p.colors?.[0] ?? '#fce4cc') + '33' }}
                 >
-                  {p.type === 'kilim' ? '🧶' : p.type === 'ceramic' ? '🏺' : '📦'}
+                  {p.photo ? (
+                    <img src={resolvePhotoUrl(p.photo)} alt={p.name} className="store-panel__product-img-photo" />
+                  ) : (
+                    CATEGORY_ICONS[p.type] || '📦'
+                  )}
                 </div>
                 <div className="store-panel__product-name">{p.name}</div>
                 <div className="store-panel__product-price">{format(p.price)}</div>

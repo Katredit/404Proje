@@ -9,6 +9,8 @@ import SellerPage from './pages/SellerPage';
 import SellerDashboard from './pages/SellerDashboard';
 import AuthPage from './pages/AuthPage';
 import CheckoutPage from './pages/CheckoutPage';
+import SpecialOrdersPage from './pages/SpecialOrdersPage';
+import MySpecialOrdersPage from './pages/MySpecialOrdersPage';
 import CartDrawer from './components/CartDrawer';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import CurrencyRateBadge from './components/CurrencyRateBadge';
@@ -25,9 +27,10 @@ function App() {
   const [selectedStore, setSelectedStore] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller' | 'dashboard' | 'checkout'
+  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller' | 'dashboard' | 'checkout' | 'special-orders' | 'my-special-orders'
   const [visitingStore, setVisitingStore] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [customOrderCheckout, setCustomOrderCheckout] = useState(null); // { offer, order }
 
   // Backend'den gelen mağazalar
   const [apiStores, setApiStores] = useState([]);
@@ -96,14 +99,33 @@ function App() {
                 onClick={() => setActivePage('seller')}
               >{t('nav.seller')}</button>
             )}
-            {/* Dükkanım: dükkanı olan kullanıcılara */}
+            {/* Dükkanım + Özel Siparişler: dükkanı olan satıcılara */}
             {user && hasSeller && (
+              <>
+                <button
+                  className={`navbar__link${activePage === 'dashboard' ? ' navbar__link--active' : ''}`}
+                  onClick={() => setActivePage('dashboard')}
+                >
+                  <span className="ms" style={{ fontSize: 16, verticalAlign: 'middle' }}>storefront</span>{' '}
+                  Dükkanım
+                </button>
+                <button
+                  className={`navbar__link${activePage === 'special-orders' ? ' navbar__link--active' : ''}`}
+                  onClick={() => setActivePage('special-orders')}
+                >
+                  <span className="ms" style={{ fontSize: 16, verticalAlign: 'middle' }}>palette</span>{' '}
+                  Özel Siparişler
+                </button>
+              </>
+            )}
+            {/* Giriş yapmış tüm kullanıcılar: Özel Sipariş Durumum */}
+            {user && (
               <button
-                className={`navbar__link${activePage === 'dashboard' ? ' navbar__link--active' : ''}`}
-                onClick={() => setActivePage('dashboard')}
+                className={`navbar__link${activePage === 'my-special-orders' ? ' navbar__link--active' : ''}`}
+                onClick={() => setActivePage('my-special-orders')}
               >
-                <span className="ms" style={{ fontSize: 16, verticalAlign: 'middle' }}>storefront</span>{' '}
-                Dükkanım
+                <span className="ms" style={{ fontSize: 16, verticalAlign: 'middle' }}>pending_actions</span>{' '}
+                Özel Sipariş Durumum
               </button>
             )}
           </nav>
@@ -142,7 +164,10 @@ function App() {
 
       {/* ── Checkout sayfası ── */}
       {activePage === 'checkout' && (
-        <CheckoutPage onBack={() => setActivePage('market')} />
+        <CheckoutPage
+          onBack={() => { setActivePage('market'); setCustomOrderCheckout(null); }}
+          customOrder={customOrderCheckout}
+        />
       )}
 
       {/* ── AI Tasarım sayfası ── */}
@@ -177,6 +202,22 @@ function App() {
         <main className="main main--full">
           <SellerDashboard />
         </main>
+      )}
+
+      {/* ── Özel Siparişler (satıcılar) ── */}
+      {activePage === 'special-orders' && (
+        <SpecialOrdersPage onBack={() => setActivePage('market')} />
+      )}
+
+      {/* ── Özel Siparişlerim (müşteriler) ── */}
+      {activePage === 'my-special-orders' && (
+        <MySpecialOrdersPage
+          onBack={() => setActivePage('market')}
+          onCheckoutCustom={(offer, order) => {
+            setCustomOrderCheckout({ offer, order });
+            setActivePage('checkout');
+          }}
+        />
       )}
 
       {/* ── Çarşı sayfası ── */}

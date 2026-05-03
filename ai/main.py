@@ -36,9 +36,6 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 app = Flask(__name__)
 CORS(app)
 
-# ─────────────────────────────────────────────────────
-# SABİTLER
-# ─────────────────────────────────────────────────────
 URUN_BOYUTLARI = {
     "vazo":   (512, 512),
     "tabak":  (512, 512),
@@ -98,9 +95,6 @@ KILIM_PROMPT_SABLONLARI = [
 ]
 
 
-# ─────────────────────────────────────────────────────
-# 1. İSTEK ANALİZİ
-# ─────────────────────────────────────────────────────
 def istek_analiz_et(kullanici_istegi):
     yanit = groq_client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -124,9 +118,6 @@ def istek_analiz_et(kullanici_istegi):
     return json.loads(yanit.choices[0].message.content)
 
 
-# ─────────────────────────────────────────────────────
-# 2. PROMPT OLUŞTURMA
-# ─────────────────────────────────────────────────────
 def kilim_motif_cevir(desen):
     desen_l = desen.lower()
     for anahtar, motif in KILIM_MOTIF_SOZLUGU.items():
@@ -163,14 +154,10 @@ def prompt_olustur(analiz):
             f"{urun_baglam.get(urun_tipi,'handcrafted product, white background, photorealistic 8K')}")
 
 
-# ─────────────────────────────────────────────────────
-# 3. GÖRSEL ÜRETİMİ
-# ─────────────────────────────────────────────────────
 def gorsel_uret(prompt, urun_tipi="vazo"):
     genislik, yukseklik = URUN_BOYUTLARI.get(urun_tipi, (512, 512))
     print(f"  Görsel üretiliyor ({genislik}×{yukseklik})...")
 
-    # 1. Pollinations
     try:
         clean   = prompt.encode("ascii", "ignore").decode("ascii")[:450]
         encoded = urllib.parse.quote(" ".join(clean.split()))
@@ -190,7 +177,6 @@ def gorsel_uret(prompt, urun_tipi="vazo"):
     except Exception as e:
         print(f"  ⚠️ Pollinations: {e}")
 
-    # 2. HuggingFace
     print("  🔄 HuggingFace deneniyor...")
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     payload = {"inputs": prompt[:500],
@@ -221,9 +207,6 @@ def gorsel_uret(prompt, urun_tipi="vazo"):
     return Image.new("RGB", (genislik, yukseklik), (245, 235, 220))
 
 
-# ─────────────────────────────────────────────────────
-# 4. KİLİM KENAR TEMİZLEME
-# ─────────────────────────────────────────────────────
 def kilim_kenarlari_temizle(img):
     w, h  = img.size
     arr   = np.array(img, dtype=np.float32)
@@ -241,9 +224,6 @@ def kilim_kenarlari_temizle(img):
     return img
 
 
-# ─────────────────────────────────────────────────────
-# 5. KOD İLE ÜRÜN ŞEKLİ ÇİZ (fotoğraf modu)
-# ─────────────────────────────────────────────────────
 def kod_ile_urun_olustur(urun_tipi):
     w, h = URUN_BOYUTLARI.get(urun_tipi, (512, 512))
     img  = Image.new("RGB", (w, h), (255, 255, 255))
@@ -300,9 +280,6 @@ def kod_ile_urun_olustur(urun_tipi):
     return img
 
 
-# ─────────────────────────────────────────────────────
-# 6. MASKE ALMA
-# ─────────────────────────────────────────────────────
 def urun_maskesi_al(img_rgb):
     w, h = img_rgb.size
 
@@ -337,9 +314,6 @@ def urun_maskesi_al(img_rgb):
     return m.resize((w, h), Image.LANCZOS)
 
 
-# ─────────────────────────────────────────────────────
-# 7. FOTOĞRAF TEXTURE SARMA
-# ─────────────────────────────────────────────────────
 def fotografi_urune_texture_sar(urun_img, fotograf_img, urun_tipi="vazo"):
     w, h = urun_img.size
     print(f"  Texture sarma başlıyor ({w}×{h})...")
@@ -395,9 +369,6 @@ def fotografi_urune_texture_sar(urun_img, fotograf_img, urun_tipi="vazo"):
     return beyaz
 
 
-# ─────────────────────────────────────────────────────
-# 8. METİN EKLEME
-# ─────────────────────────────────────────────────────
 def metni_ekle(gorsel, metin, konum="orta"):
     img = gorsel.copy().convert("RGBA")
     w, h = img.size
@@ -453,7 +424,7 @@ def gorsel_to_base64(g):
 
 
 # ─────────────────────────────────────────────────────
-# 9. FLASK ENDPOINT'LERİ
+# FLASK ENDPOINT'LERİ
 # ─────────────────────────────────────────────────────
 tasarim_oturumlari = {}
 
@@ -633,35 +604,25 @@ def tasarim_kaydet():
 
 
 # ─────────────────────────────────────────────────────
-# 10. BAŞLAT
-#     - Colab (notebook) ve normal Python'da çalışır
-#     - Port meşgulse otomatik temizler
-#     - threading ile arka planda başlar (notebook donmaz)
+# BAŞLAT  ←  DÜZELTME BURADA
 # ─────────────────────────────────────────────────────
 import logging
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
-# Portu temizle (önceki çalıştırmalar varsa)
-os.system("fuser -k 5000/tcp 2>/dev/null || true")
-time.sleep(1)
+if __name__ == "__main__":
+    # Portu temizle (önceki çalıştırmalar varsa)
+    os.system("fuser -k 5000/tcp 2>/dev/null || true")
+    time.sleep(1)
 
-def _flask_calistir():
-    for port in [5000, 5001, 5002]:
-        try:
-            print(f"📡 Port {port} başlatılıyor...")
-            app.run(host="0.0.0.0", port=port, debug=False,
-                    threaded=True, use_reloader=False)
-            break
-        except SystemExit:
-            print(f"⚠️ Port {port} dolu, {port+1} deneniyor...")
+    PORT = int(os.environ.get("PORT", 5000))
 
-_t = threading.Thread(target=_flask_calistir)
-_t.daemon = True
-_t.start()
-time.sleep(2)
+    print("=" * 50)
+    print("✅ KapadokyaCraft v9 FINAL başlatılıyor...")
+    print(f"   rembg: {'✅ aktif' if REMBG_MEVCUT else '⚠️ yok (renk bazlı yedek)'}")
+    print(f"📡 http://localhost:{PORT}/uret")
+    print("   Durdurmak için: Ctrl+C")
+    print("=" * 50)
 
-print("=" * 50)
-print("✅ KapadokyaCraft v9 FINAL hazır!")
-print(f"   rembg: {'✅ aktif' if REMBG_MEVCUT else '⚠️ yok (renk bazlı yedek)'}")
-print("📡 http://localhost:5000/uret")
-print("=" * 50)
+    # Ana thread'de doğrudan çalıştır — thread yok, daemon yok.
+    # Bu sayede program Ctrl+C'ye kadar ayakta kalır.
+    app.run(host="0.0.0.0", port=PORT, debug=False, threaded=True, use_reloader=False)

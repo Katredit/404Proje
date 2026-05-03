@@ -15,6 +15,66 @@ const STATIK_ATOLYELER = [
   { id: 6, isim: "Mustafapaşa Kilim Atölyesi",   lat: 38.5876, lon: 34.9234, tip: "kilim",  adres: "Mustafapaşa, Nevşehir" },
 ];
 
+const KAPADOKYA_MERKEZ = { lat: 38.6431, lon: 34.8289, isim: "Göreme, Nevşehir" };
+
+const ULKE_MERKEZLERI = {
+  turkey: { lat: 39.0, lon: 35.0, tamAd: "Turkey (yaklaşık merkez)" },
+  turkiye: { lat: 39.0, lon: 35.0, tamAd: "Türkiye (yaklaşık merkez)" },
+  germany: { lat: 51.1657, lon: 10.4515, tamAd: "Germany (yaklaşık merkez)" },
+  almanya: { lat: 51.1657, lon: 10.4515, tamAd: "Almanya (yaklaşık merkez)" },
+  "united states": { lat: 39.8283, lon: -98.5795, tamAd: "United States (yaklaşık merkez)" },
+  abd: { lat: 39.8283, lon: -98.5795, tamAd: "ABD (yaklaşık merkez)" },
+  "united kingdom": { lat: 55.3781, lon: -3.436, tamAd: "United Kingdom (yaklaşık merkez)" },
+  "birlesik krallik": { lat: 55.3781, lon: -3.436, tamAd: "Birleşik Krallık (yaklaşık merkez)" },
+  france: { lat: 46.2276, lon: 2.2137, tamAd: "France (yaklaşık merkez)" },
+  fransa: { lat: 46.2276, lon: 2.2137, tamAd: "Fransa (yaklaşık merkez)" },
+  netherlands: { lat: 52.1326, lon: 5.2913, tamAd: "Netherlands (yaklaşık merkez)" },
+  hollanda: { lat: 52.1326, lon: 5.2913, tamAd: "Hollanda (yaklaşık merkez)" },
+};
+
+function teslimatTahminiHesapla(km, tasima) {
+  const hazirlikGun = 1.5;
+  const kmGunHizi = tasima === "kara" ? 750 : 1800;
+  const aktarmaGun = tasima === "kara" ? 0.75 : 1.25;
+  const hamGun = hazirlikGun + km / kmGunHizi + aktarmaGun;
+
+  const ortalamaGun = Math.max(2, Math.min(21, Math.round(hamGun)));
+  const minGun = Math.max(1, ortalamaGun - 1);
+  const maxGun = Math.min(30, ortalamaGun + 2);
+
+  return { ortalamaGun, minGun, maxGun };
+}
+
+async function adrestenKoordinatBul(adres) {
+  const parcalar = String(adres || "")
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const adaySorgular = [
+    adres,
+    parcalar.slice(-3).join(", "),
+    parcalar.slice(-2).join(", "),
+    parcalar.slice(-1).join(", "),
+  ].filter(Boolean);
+
+  for (const sorgu of adaySorgular) {
+    try {
+      return await sehirdenKoordinat(sorgu);
+    } catch {
+      // Bir sonraki sorgu kombinasyonunu dene.
+    }
+  }
+
+  const ulkeAnahtari = (parcalar[parcalar.length - 1] || "").toLowerCase();
+  const ulkeMerkezi = ULKE_MERKEZLERI[ulkeAnahtari];
+  if (ulkeMerkezi) {
+    return { lat: ulkeMerkezi.lat, lon: ulkeMerkezi.lon, tamAd: ulkeMerkezi.tamAd };
+  }
+
+  throw new Error('Adres için koordinat bulunamadı. Lütfen şehir ve ülke bilgisini kontrol edin.');
+}
+
 // ─── Overpass API ile OSM'den atölye çek ─────────────────────
 async function overpassAtolyeCek() {
   const query = `
@@ -146,6 +206,50 @@ router.get("/mesafe", async (req, res) => {
         aciklama: "Haversine formülü ile hesaplandı",
       },
       kaynak: "OpenStreetMap Nominatim + Haversine",
+    });
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+// ─── GET /api/cografya/tahmini-teslimat ─────────────────────
+// Girilen adrese göre Kapadokya'dan ortalama teslimat süresini hesaplar
+// Sorgu parametreleri:
+//   adres : string  – açık adres/şehir/ülke bilgisi
+//   tasima: string  – kara | hava (opsiyonel, default: kara)
+router.get("/tahmini-teslimat", async (req, res) => {
+  try {
+    const { adres, tasima = "kara" } = req.query;
+    if (!adres) {
+      return res.status(400).json({ hata: '"adres" parametresi zorunludur.' });
+    }
+    if (!["kara", "hava"].includes(tasima)) {
+      return res.status(400).json({ hata: '"tasima" sadece "kara" veya "hava" olabilir.' });
+    }
+
+    const teslimatNoktasi = await adrestenKoordinatBul(adres);
+    const mesafeKm = haversineKm(
+      KAPADOKYA_MERKEZ.lat,
+      KAPADOKYA_MERKEZ.lon,
+      teslimatNoktasi.lat,
+      teslimatNoktasi.lon
+    );
+    const tahmin = teslimatTahminiHesapla(mesafeKm, tasima);
+
+    res.json({
+      kaynak: "OpenStreetMap Nominatim + Haversine + kural tabanlı ETA modeli",
+      cikisNoktasi: KAPADOKYA_MERKEZ,
+      teslimatNoktasi: {
+        girilen: adres,
+        tamAd: teslimatNoktasi.tamAd,
+        koordinat: { lat: teslimatNoktasi.lat, lon: teslimatNoktasi.lon },
+      },
+      tasima,
+      mesafe: { km: Math.round(mesafeKm) },
+      tahminiTeslimat: {
+        ortalamaGun: tahmin.ortalamaGun,
+        aralik: { minGun: tahmin.minGun, maxGun: tahmin.maxGun },
+      },
     });
   } catch (err) {
     res.status(500).json({ hata: err.message });

@@ -54,4 +54,5 @@ function makeRepo(name) {
 module.exports = {
   users: makeRepo("users"),
   stores: makeRepo("stores"),
+  customOrders: makeRepo("customOrders"),
 };

@@ -271,6 +271,7 @@
   position: relative;
 }
 .sdash-product-thumb__icon { font-size:2.5rem; color:#d6d3d1; }
+.sdash-product-thumb__img { width:100%; height:100%; object-fit:cover; display:block; }
 .sdash-product-thumb__sold-out {
   position: absolute;
   inset: 0;
@@ -292,7 +293,7 @@
 .sdash-product-card__info { flex:1; display:flex; flex-direction:column; justify-content:space-between; min-height:128px; }
 .sdash-product-card__top { display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem; }
 .sdash-product-card__name { font-weight:600; color:#c0392b; font-size:1rem; margin:0 0 0.25rem; line-height:1.6; }
-.sdash-product-card__desc { font-size:0.82rem; color:#78716c; margin:0; line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
+.sdash-product-card__desc { font-size:0.82rem; color:#78716c; margin:0; line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; line-clamp:1; -webkit-box-orient:vertical; }
 .sdash-product-card__price-block { text-align:right; flex-shrink:0; }
 .sdash-product-card__price { display:block; font-size:1.1rem; font-weight:700; color:#292524; }
 .sdash-product-card__stock { display:block; font-size:0.72rem; color:#16a34a; font-weight:700; text-transform:uppercase; margin-top:0.25rem; }

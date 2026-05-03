@@ -1,44 +1,31 @@
 [
   {
-    "ownerId": "1777753005928",
+    "ownerId": "1777775558561",
     "name": "Çini Evi",
     "owner": "Arda Dönmez",
     "category": "Seramik",
-    "description": "asdasdasdsa",
+    "description": "Tanıtım",
     "location": "Göreme",
     "openSince": 2026,
-    "flag": "🔵",
+    "flag": "🟢",
     "badge": "Yeni",
-    "color": "#C0392B",
-    "accentColor": "#E74C3C",
-    "roofColor": "#922B21",
+    "color": "#27AE60",
+    "accentColor": "#2ECC71",
+    "roofColor": "#1E8449",
     "products": [
       {
-        "id": 1777772097179,
-        "name": "Deneme Ürünü",
-        "type": "kilim",
+        "id": 1777775611328,
+        "name": "Boya",
+        "type": "ceramic",
         "price": 50,
         "description": "Açıklama",
         "stock": 10,
         "colors": [],
-        "size": "120x180",
+        "size": "10x50",
         "height": null,
-        "material": "Yün",
-        "createdAt": "2026-05-03T01:34:57.179Z"
-      },
-      {
-        "id": 1777773765866,
-        "name": "Deneme",
-        "type": "stone",
-        "price": 50,
-        "description": "adasdasd",
-        "stock": 10,
-        "colors": [],
-        "size": "10x10",
-        "height": null,
-        "material": "Paumk",
-        "photo": "/uploads/1777773751262.png",
-        "createdAt": "2026-05-03T02:02:45.866Z"
+        "material": "Seramik",
+        "photo": "/uploads/1777776104915.png",
+        "createdAt": "2026-05-03T02:33:31.328Z"
       }
     ],
     "rating": 5,
@@ -48,7 +35,7 @@
       0,
       -2
     ],
-    "createdAt": "2026-05-02T20:23:05.913Z",
-    "id": "1777753385913"
+    "createdAt": "2026-05-03T02:32:59.455Z",
+    "id": "1777775579455"
   }
 ]

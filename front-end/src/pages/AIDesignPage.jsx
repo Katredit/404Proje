@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import './AIDesignPage.css';
 
 const BASE_URL = 'http://localhost:5000';
@@ -21,6 +23,7 @@ const PRESETS = {
   ],
 };
 export default function AIDesignPage({ onBack, onNavigate }) {
+  const { user } = useAuth();
   const [productType, setProductType]   = useState('vazo');
   const [prompt, setPrompt]             = useState('');
   const [photo, setPhoto]               = useState(null);
@@ -28,6 +31,10 @@ export default function AIDesignPage({ onBack, onNavigate }) {
   const [result, setResult]             = useState(null);
   const [sessionId, setSessionId]       = useState(null);
   const [editPrompt, setEditPrompt]     = useState('');
+  const [orderNote, setOrderNote]       = useState('');
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderError, setOrderError]     = useState('');
   const [editPhoto, setEditPhoto]       = useState(null);
   const [editLoading, setEditLoading]   = useState(false);
   const [canUndo, setCanUndo]           = useState(false);
@@ -182,6 +189,32 @@ export default function AIDesignPage({ onBack, onNavigate }) {
     setEditPhoto(null);
     setEditError('');
     setPhoto(null);
+    setOrderNote('');
+    setOrderSuccess(false);
+    setOrderError('');
+  };
+
+  const handleSubmitOrder = async () => {
+    if (!result) return;
+    if (!user) { setOrderError('Sipariş vermek için giriş yapmanız gerekiyor.'); return; }
+    setOrderLoading(true);
+    setOrderError('');
+    setOrderSuccess(false);
+    try {
+      // data:image/png;base64,XXX formatından sadece base64 kısmını al
+      const base64 = result.split(',')[1];
+      await api.post('/custom-orders', {
+        productType,
+        prompt,
+        imageBase64: base64,
+        note: orderNote,
+      });
+      setOrderSuccess(true);
+    } catch (err) {
+      setOrderError(err.response?.data?.hata || 'Sipariş gönderilemedi.');
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   return (
@@ -342,6 +375,52 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                     <span className="ms">refresh</span>Yeni Tasarım
                   </button>
                 </div>
+
+                {/* Özel Sipariş Paneli */}
+                {!orderSuccess ? (
+                  <div className="ai-page__order-panel">
+                    <div className="ai-page__order-panel__title">
+                      <span className="ms">send</span>
+                      Özel Sipariş Ver
+                    </div>
+                    <p className="ai-page__order-panel__desc">
+                      Bu tasarımı tüm satıcılara gönderin, fiyat teklifleri alın ve en uygununu seçin.
+                    </p>
+                    <textarea
+                      className="ai-page__textarea ai-page__textarea--sm"
+                      placeholder="Ek notunuz (opsiyonel): Boyut, renk tercihi, teslimat süresi..."
+                      value={orderNote}
+                      onChange={(e) => setOrderNote(e.target.value)}
+                      rows={2}
+                      maxLength={500}
+                    />
+                    {orderError && <div className="ai-page__error">{orderError}</div>}
+                    <button
+                      className="ai-page__order-btn"
+                      onClick={handleSubmitOrder}
+                      disabled={orderLoading}
+                    >
+                      {orderLoading
+                        ? <><span className="ai-page__spinner ai-page__spinner--sm" />Gönderiliyor...</>
+                        : <><span className="ms">storefront</span>Satıcılara Gönder</>
+                      }
+                    </button>
+                  </div>
+                ) : (
+                  <div className="ai-page__order-success">
+                    <span className="ms">check_circle</span>
+                    <div>
+                      <strong>Siparişiniz gönderildi!</strong>
+                      <p>Satıcılar tekliflerini hazırlıyor. "Özel Siparişlerim" sayfasından takip edebilirsiniz.</p>
+                    </div>
+                    <button
+                      className="ai-page__result-btn"
+                      onClick={() => onNavigate?.('my-special-orders')}
+                    >
+                      <span className="ms">arrow_forward</span>Siparişlerimi Gör
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

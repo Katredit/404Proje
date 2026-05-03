@@ -12,9 +12,9 @@
   "market": {
     "title": "Kapadokya 3D Çarşısı",
     "subtitle": "Mağazaları keşfetmek için tıkla veya döndür",
-    "hintRotate": "Sürükle: döndür",
-    "hintZoom": "Scroll: zoom",
-    "hintClick": "Mağazaya tıkla: detay"
+    "hintRotate": "Sürükle: Döndür",
+    "hintZoom": "Scroll: Yakınlaştır",
+    "hintClick": "Mağazaya tıkla: Detayları Gör"
   },
   "sidebar": {
     "title": "Mağazalar",
@@ -157,7 +157,7 @@
     }
   },
   "modal": {
-    "hint": "🖱️ Sürükle: döndür · ⚙️ Scroll: zoom · 📐 Eksenler sağ altta",
+    "hint": "🖱️ Sürükle: Döndür · ⚙️ Scroll: Yakınlaştır · 📐 Eksenler sağ altta",
     "material": "Malzeme",
     "size": "Boyut",
     "height": "Yükseklik",

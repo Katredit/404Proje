@@ -80,6 +80,16 @@ function getCo2Level(kg) {
   return CO2_EMOJIS.find(e => kg < e.limit);
 }
 
+const ETA_LEVELS = [
+  { limit: 3, label: 'Hızlı', color: '#4a9a5a', bg: '#eaf5ec', icon: '⚡' },
+  { limit: 7, label: 'Standart', color: '#d28a35', bg: '#fdf6e8', icon: '📦' },
+  { limit: Infinity, label: 'Uzak Mesafe', color: '#b96a45', bg: '#faf0ea', icon: '🛫' },
+];
+
+function getEtaLevel(day) {
+  return ETA_LEVELS.find((e) => day <= e.limit);
+}
+
 /* ─── Carbon Card ─── */
 function CarbonCard({ data, loading, error }) {
   if (loading) {
@@ -135,8 +145,74 @@ function CarbonCard({ data, loading, error }) {
   );
 }
 
+function DeliveryEtaCard({ data, loading, error }) {
+  if (loading) {
+    return (
+      <div className="delivery-eta-card delivery-eta-card--loading">
+        <span className="delivery-eta-card__spinner" />
+        <span>Tahmini teslimat süresi hesaplanıyor...</span>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="delivery-eta-card delivery-eta-card--error">
+        <span className="ms" style={{ fontSize: 18 }}>info</span>
+        <span style={{ fontSize: 12 }}>Teslimat süresi alınamadı</span>
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  const day = data.tahminiTeslimat.ortalamaGun;
+  const level = getEtaLevel(day);
+
+  return (
+    <div className="delivery-eta-card" style={{ background: level.bg, borderColor: level.color + '44' }}>
+      <div className="delivery-eta-card__header">
+        <span className="delivery-eta-card__icon">{level.icon}</span>
+        <div>
+          <span className="delivery-eta-card__title" style={{ color: level.color }}>Tahmini Teslimat</span>
+          <span className="delivery-eta-card__badge" style={{ background: level.color }}>{level.label}</span>
+        </div>
+      </div>
+
+      <div className="delivery-eta-card__big" style={{ color: level.color }}>
+        ~{day} gün
+      </div>
+
+      <div className="delivery-eta-card__rows">
+        <div className="delivery-eta-card__row">
+          <span>🗓 Aralık</span>
+          <strong>
+            {data.tahminiTeslimat.aralik.minGun}-{data.tahminiTeslimat.aralik.maxGun} gün
+          </strong>
+        </div>
+        <div className="delivery-eta-card__row">
+          <span>📍 Mesafe</span>
+          <strong>{data.mesafe.km.toLocaleString()} km</strong>
+        </div>
+        <div className="delivery-eta-card__row">
+          <span>🚛 Taşıma</span>
+          <strong>{data.tasima === 'kara' ? 'Karayolu' : 'Havayolu'}</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Order Summary ─── */
-function OrderSummary({ items, totalPrice, format, carbonData, carbonLoading, carbonError }) {
+function OrderSummary({
+  items,
+  totalPrice,
+  format,
+  carbonData,
+  carbonLoading,
+  carbonError,
+  etaData,
+  etaLoading,
+  etaError,
+}) {
   const shipping = totalPrice > 500 ? 0 : 29.9;
 
   return (
@@ -185,6 +261,12 @@ function OrderSummary({ items, totalPrice, format, carbonData, carbonLoading, ca
         <>
           <hr className="checkout-summary__divider" />
           <CarbonCard data={carbonData} loading={carbonLoading} error={carbonError} />
+        </>
+      )}
+      {(etaLoading || etaData || etaError) && (
+        <>
+          <hr className="checkout-summary__divider" />
+          <DeliveryEtaCard data={etaData} loading={etaLoading} error={etaError} />
         </>
       )}
     </aside>
@@ -255,7 +337,7 @@ function DeliveryStep({ data, onChange, errors }) {
 }
 
 /* ─── Step 1: Payment ─── */
-function PaymentStep({ data, onChange, errors, carbonData, carbonLoading, carbonError }) {
+function PaymentStep({ data, onChange, errors, carbonData, carbonLoading, carbonError, etaData, etaLoading, etaError }) {
   return (
     <>
     <div className="checkout-card">
@@ -333,12 +415,15 @@ function PaymentStep({ data, onChange, errors, carbonData, carbonLoading, carbon
     {(carbonLoading || carbonData || carbonError) && (
       <CarbonCard data={carbonData} loading={carbonLoading} error={carbonError} />
     )}
+    {(etaLoading || etaData || etaError) && (
+      <DeliveryEtaCard data={etaData} loading={etaLoading} error={etaError} />
+    )}
     </>
   );
 }
 
 /* ─── Step 2: Confirm ─── */
-function ConfirmStep({ deliveryData, paymentData, items, totalPrice, format, carbonData }) {
+function ConfirmStep({ deliveryData, paymentData, items, totalPrice, format, carbonData, etaData }) {
   const shipping = totalPrice > 500 ? 0 : 29.9;
   const maskedCard = paymentData.cardNumber
     ? '**** **** **** ' + paymentData.cardNumber.replace(/\s/g, '').slice(-4)
@@ -414,14 +499,37 @@ function ConfirmStep({ deliveryData, paymentData, items, totalPrice, format, car
           <CarbonCard data={carbonData} loading={false} error={null} />
         </div>
       )}
+
+      {etaData && (
+        <div style={{ marginTop: 20 }}>
+          <DeliveryEtaCard data={etaData} loading={false} error={null} />
+        </div>
+      )}
     </div>
   );
 }
 
 /* ─── Main Component ─── */
-export default function CheckoutPage({ onBack }) {
-  const { items, totalPrice, clearCart } = useCart();
+export default function CheckoutPage({ onBack, customOrder }) {
+  const { items, totalPrice: cartTotalPrice, clearCart } = useCart();
   const { format } = useCurrencyPrice();
+
+  // Özel sipariş modunda fiyat ve ürün listesi farklı
+  const isCustomOrder = !!customOrder;
+  const checkoutItems = isCustomOrder
+    ? [{
+        product: {
+          id: customOrder.order.id,
+          name: `Özel ${customOrder.order.productType === 'vazo' ? 'Vazo' : 'Kilim'} Tasarımı`,
+          price: customOrder.offer.price,
+          type: customOrder.order.productType,
+          colors: customOrder.order.productType === 'kilim' ? ['#C0392B', '#2980B9'] : ['#c0764a', '#8a4820'],
+        },
+        store: { id: customOrder.offer.storeId, name: customOrder.offer.storeName },
+        quantity: 1,
+      }]
+    : items;
+  const totalPrice = isCustomOrder ? customOrder.offer.price : cartTotalPrice;
 
   const [step, setStep] = useState(0);
   const [deliveryData, setDeliveryData] = useState({ country: 'TR' });
@@ -431,9 +539,16 @@ export default function CheckoutPage({ onBack }) {
   const [carbonData, setCarbonData] = useState(null);
   const [carbonLoading, setCarbonLoading] = useState(false);
   const [carbonError, setCarbonError] = useState(false);
+  const [etaData, setEtaData] = useState(null);
+  const [etaLoading, setEtaLoading] = useState(false);
+  const [etaError, setEtaError] = useState(false);
 
   const handleDeliveryChange = (key, val) => {
     setDeliveryData(prev => ({ ...prev, [key]: val }));
+    if (['address', 'district', 'city', 'country'].includes(key)) {
+      setEtaData(null);
+      setEtaError(false);
+    }
     if (errors[key]) setErrors(prev => { const e = { ...prev }; delete e[key]; return e; });
   };
 
@@ -452,17 +567,27 @@ export default function CheckoutPage({ onBack }) {
       const { city, district, country = 'TR' } = deliveryData;
       const countryName = COUNTRY_NAMES[country] || country;
       const sehir = [city, district, countryName].filter(Boolean).join(', ');
+      const adres = [district, city, countryName].filter(Boolean).join(', ');
       const tasima = getTasima(country);
-      const urun = getUrunTipi(items);
+      const urun = getUrunTipi(checkoutItems);
 
       setCarbonData(null);
       setCarbonError(false);
       setCarbonLoading(true);
 
+      setEtaData(null);
+      setEtaError(false);
+      setEtaLoading(true);
+
       api.get('/karbon/hesapla', { params: { sehir, tasima, urun } })
         .then(res => setCarbonData(res.data))
         .catch(() => setCarbonError(true))
         .finally(() => setCarbonLoading(false));
+
+      api.get('/cografya/tahmini-teslimat', { params: { adres, tasima } })
+        .then(res => setEtaData(res.data))
+        .catch(() => setEtaError(true))
+        .finally(() => setEtaLoading(false));
     }
 
     setStep(s => s + 1);
@@ -471,7 +596,7 @@ export default function CheckoutPage({ onBack }) {
   const handleConfirm = () => {
     const id = generateOrderId();
     setOrderId(id);
-    clearCart();
+    if (!isCustomOrder) clearCart();
     setStep(3); // success screen
   };
 
@@ -547,16 +672,20 @@ export default function CheckoutPage({ onBack }) {
                 carbonData={carbonData}
                 carbonLoading={carbonLoading}
                 carbonError={carbonError}
+                etaData={etaData}
+                etaLoading={etaLoading}
+                etaError={etaError}
               />
             )}
             {step === 2 && (
               <ConfirmStep
                 deliveryData={deliveryData}
                 paymentData={paymentData}
-                items={items}
+                items={checkoutItems}
                 totalPrice={totalPrice}
                 format={format}
                 carbonData={carbonData}
+                etaData={etaData}
               />
             )}
 
@@ -583,12 +712,15 @@ export default function CheckoutPage({ onBack }) {
           </div>
 
           <OrderSummary
-            items={items}
+            items={checkoutItems}
             totalPrice={totalPrice}
             format={format}
             carbonData={carbonData}
             carbonLoading={carbonLoading}
             carbonError={carbonError}
+            etaData={etaData}
+            etaLoading={etaLoading}
+            etaError={etaError}
           />
         </div>
       )}

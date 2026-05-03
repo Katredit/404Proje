@@ -1,0 +1,389 @@
+.msop-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fdf6ee 0%, #f5ede0 100%);
+  padding: 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Header ── */
+.msop-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.msop-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: background 0.2s;
+}
+.msop-back-btn:hover { background: #fff; }
+
+.msop-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msop-subtitle {
+  color: #7a5c3d;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.msop-refresh-btn {
+  margin-left: auto;
+  border: none;
+  background: rgba(255,255,255,0.8);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: background 0.2s;
+}
+.msop-refresh-btn:hover { background: #fff; }
+
+/* ── States ── */
+.msop-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: #7a5c3d;
+}
+
+.msop-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e8d5b7;
+  border-top-color: #c0764a;
+  border-radius: 50%;
+  animation: msop-spin 0.8s linear infinite;
+}
+
+.msop-spinner--sm {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+@keyframes msop-spin { to { transform: rotate(360deg); } }
+
+.msop-error {
+  background: #fff0f0;
+  border: 1px solid #f5c6c6;
+  color: #c0392b;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.msop-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #7a5c3d;
+}
+
+.msop-empty__icon {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.msop-empty h3 { margin: 0 0 8px; font-size: 1.2rem; }
+.msop-empty p { margin: 0 0 24px; font-size: 0.9rem; opacity: 0.7; }
+
+.msop-gate {
+  text-align: center;
+  padding: 100px 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.msop-gate__icon {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+  color: #c0764a;
+}
+.msop-gate h2 { margin: 0 0 8px; color: #2c1810; }
+.msop-gate p { color: #7a5c3d; margin: 0 0 24px; }
+
+/* ── List ── */
+.msop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ── Card ── */
+.msop-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border: 2px solid transparent;
+  transition: box-shadow 0.2s;
+}
+
+.msop-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.msop-card--accepted {
+  border-color: #27ae60;
+}
+
+.msop-card__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.msop-card__header:hover {
+  background: #fdf9f5;
+}
+
+.msop-card__image-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f5ede0;
+}
+
+.msop-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.msop-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.msop-card__type {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #c0764a;
+  margin-bottom: 4px;
+}
+
+.msop-card__prompt {
+  font-size: 0.85rem;
+  color: #4a3728;
+  margin: 0 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msop-card__meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  align-items: center;
+}
+
+.msop-card__status {
+  font-weight: 600;
+}
+
+.msop-card__offer-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #7a5c3d;
+}
+
+.msop-card__accepted-offer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #27ae60;
+  margin-top: 6px;
+}
+
+.msop-card__expand-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #aaa;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Offers panel ── */
+.msop-card__offers {
+  border-top: 1px solid #f0e8d8;
+  padding: 16px 16px 20px;
+  background: #fdf9f5;
+}
+
+.msop-card__your-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #7a5c3d;
+  margin-bottom: 8px;
+}
+
+.msop-card__date {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 16px;
+}
+
+.msop-no-offers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #7a5c3d;
+  padding: 12px 0;
+}
+
+.msop-offers-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4a3728;
+  margin: 0 0 12px;
+}
+
+.msop-offers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Single offer ── */
+.msop-offer {
+  background: #fff;
+  border: 1px solid #e8d5b7;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto;
+  gap: 4px 12px;
+  align-items: start;
+}
+
+.msop-offer--accepted {
+  border-color: #27ae60;
+  background: #f0faf5;
+}
+
+.msop-offer__store {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #4a3728;
+  grid-column: 1;
+}
+
+.msop-offer__price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #c0764a;
+  grid-column: 2;
+  grid-row: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.msop-offer__note {
+  font-size: 0.8rem;
+  color: #7a5c3d;
+  font-style: italic;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.msop-offer__date {
+  font-size: 0.75rem;
+  color: #aaa;
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+.msop-offer__accept-btn {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.msop-offer__accepted-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #27ae60;
+  grid-column: 1 / -1;
+  margin-top: 6px;
+}
+
+/* ── Buttons ── */
+.msop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.msop-btn--primary {
+  background: linear-gradient(135deg, #c0764a, #a05a30);
+  color: #fff;
+}
+.msop-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #a05a30, #8a4820);
+  transform: translateY(-1px);
+}
+.msop-btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
