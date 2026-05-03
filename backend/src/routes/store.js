@@ -88,7 +88,7 @@ router.post("/:id/products", authMiddleware, (req, res) => {
     return res.status(403).json({ hata: "Bu dükkanın sahibi değilsiniz." });
   }
 
-  const { name, type, price, description, stock, colors, size, height, material } = req.body;
+  const { name, type, price, description, stock, colors, size, height, material, photo } = req.body;
   if (!name || price === undefined) {
     return res.status(400).json({ hata: "name ve price zorunludur." });
   }
@@ -104,6 +104,7 @@ router.post("/:id/products", authMiddleware, (req, res) => {
     size: size || null,
     height: height || null,
     material: material || null,
+    photo: photo || null,
     createdAt: new Date().toISOString(),
   };
 
@@ -125,7 +126,7 @@ router.put("/:id/products/:pid", authMiddleware, (req, res) => {
   const idx = products.findIndex((p) => p.id === pid);
   if (idx === -1) return res.status(404).json({ hata: "Ürün bulunamadı." });
 
-  const allowed = ["name", "type", "price", "description", "stock", "colors", "size", "height", "material"];
+  const allowed = ["name", "type", "price", "description", "stock", "colors", "size", "height", "material", "photo"];
   const patch = {};
   allowed.forEach((k) => { if (req.body[k] !== undefined) patch[k] = req.body[k]; });
   if (patch.price !== undefined) patch.price = Number(patch.price);

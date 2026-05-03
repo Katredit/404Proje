@@ -4,8 +4,6 @@
 
 .seller-page {
   min-height: 100vh;
-  height: 100vh;
-  overflow-y: auto;
   overflow-x: hidden;
   background: var(--c-bg);
   font-family: 'Inter', sans-serif;

@@ -659,12 +659,11 @@ export default function SellerDashboard() {
   return (
 
     <div className="sdash-page">
-
-
+      <div className="sdash-inner">
 
       {/* ── Dükkan Başlık Kartı ── */}
 
-      <section className="sdash-store-header" style={{ borderLeftColor: store.accentColor || "var(--c-accent)" }}>
+      <section className="sdash-store-header">
 
         <div className="sdash-store-header__left">
 
@@ -678,7 +677,7 @@ export default function SellerDashboard() {
 
               <span className="sdash-store-header__cat-pill"
 
-                style={{ color: store.accentColor, background: (store.accentColor || "#c0392b") + "18" }}>
+                style={{ color: "#c0392b", background: "rgba(192,57,43,0.08)" }}>
 
                 {store.category}
 
@@ -696,7 +695,7 @@ export default function SellerDashboard() {
 
         </div>
 
-        <span className="sdash-store-header__badge" style={{ background: store.accentColor || "var(--c-accent)" }}>
+        <span className="sdash-store-header__badge">
 
           {store.badge}
 
@@ -916,6 +915,7 @@ export default function SellerDashboard() {
 
       </section>
 
+    </div>
     </div>
 
   );

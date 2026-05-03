@@ -12,7 +12,35 @@
     "color": "#C0392B",
     "accentColor": "#E74C3C",
     "roofColor": "#922B21",
-    "products": [],
+    "products": [
+      {
+        "id": 1777772097179,
+        "name": "Deneme Ürünü",
+        "type": "kilim",
+        "price": 50,
+        "description": "Açıklama",
+        "stock": 10,
+        "colors": [],
+        "size": "120x180",
+        "height": null,
+        "material": "Yün",
+        "createdAt": "2026-05-03T01:34:57.179Z"
+      },
+      {
+        "id": 1777773765866,
+        "name": "Deneme",
+        "type": "stone",
+        "price": 50,
+        "description": "adasdasd",
+        "stock": 10,
+        "colors": [],
+        "size": "10x10",
+        "height": null,
+        "material": "Paumk",
+        "photo": "/uploads/1777773751262.png",
+        "createdAt": "2026-05-03T02:02:45.866Z"
+      }
+    ],
     "rating": 5,
     "reviewCount": 0,
     "position": [

@@ -1,38 +1,12 @@
-import { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import KilimViewer from './viewers/KilimViewer';
-import CeramicViewer from './viewers/CeramicViewer';
 import '../pages/StoreDetail.css';
 
 function Product3DModal({ product, store, onClose }) {
-  const is3D = product.type === 'kilim' || product.type === 'ceramic';
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal__close" onClick={onClose} aria-label="Kapat">✕</button>
 
         <div className="modal__content">
-          {/* 3D Görüntüleyici */}
-          <div className="modal__viewer">
-            <Canvas
-              camera={{ position: [0, 1.5, 8], fov: 48 }}
-              shadows
-              style={{ width: '100%', height: '100%' }}
-            >
-              <Suspense fallback={null}>
-                {product.type === 'kilim' ? (
-                  <KilimViewer product={product} />
-                ) : (
-                  <CeramicViewer product={product} />
-                )}
-              </Suspense>
-            </Canvas>
-            <div className="modal__viewer-hint">
-              🖱️ Sürükle: döndür &nbsp;·&nbsp; ⚙️ Scroll: zoom &nbsp;·&nbsp; 📐 Koordinat eksenleri sağ altta
-            </div>
-          </div>
-
           {/* Ürün Bilgileri */}
           <div className="modal__info">
             <span

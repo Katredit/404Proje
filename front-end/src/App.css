@@ -59,8 +59,9 @@
 body {
   background: var(--c-bg);
   color: var(--c-text);
-  overflow: hidden;
-  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 100vh;
 }
 
 /* ── Material Symbols helper ── */
@@ -196,7 +197,8 @@ body {
 .navbar__btn--icon .ms { font-size: 22px; }
 
 .navbar__cart-btn { position: relative; }
-.navbar__cart-count {
+.navbar__cart-count,
+.navbar__cart-badge {
   position: absolute;
   top: 2px;
   right: 2px;
@@ -251,7 +253,11 @@ body {
 }
 
 .main--full {
-  padding-top: 64px;
+  display: block;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: var(--navbar-h);
   min-height: 100vh;
   background: var(--c-bg);
 }
@@ -307,6 +313,14 @@ body {
   /* max-width: 1280px; */
   margin: 0 auto;
   width: 100%;
+}
+
+.main.main--full {
+  display: block;
+  height: 100vh;
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ════════════════════════════════

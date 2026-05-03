@@ -8,13 +8,15 @@ const cografyaRouter = require("./routes/cografya");
 const bonusRouter = require("./routes/bonus");
 const authRouter = require("./routes/auth");
 const storeRouter = require("./routes/store");
+const uploadRouter = require("./routes/upload");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ─── Middleware ───────────────────────────────────────────────
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use('/uploads', express.static(require('path').join(__dirname, '..', 'uploads')));
 
 // İstek logları
 app.use((req, _res, next) => {
@@ -25,6 +27,7 @@ app.use((req, _res, next) => {
 // ─── Routes ──────────────────────────────────────────────────
 app.use("/api/auth", authRouter);           // Auth (register/login/me)
 app.use("/api/stores", storeRouter);        // Dükkanlar + Ürünler
+app.use("/api/upload", uploadRouter);       // Görsel yükleme
 app.use("/api/karbon", carbonRouter);   // Kural 1
 app.use("/api/doviz", dovizRouter);     // Kural 2
 app.use("/api/cografya", cografyaRouter); // Kural 3

@@ -1,34 +1,47 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Product3DModal from '../components/Product3DModal';
 import { useTranslatedStore } from '../hooks/useTranslatedStore';
 import './StoreDetail.css';
 import { useCurrencyPrice } from '../hooks/useCurrencyPrice';
 import CurrencyRateBadge from '../components/CurrencyRateBadge';
+import { useCart } from '../context/CartContext';
 
-const CATEGORY_ICONS = { kilim: '🧶', ceramic: '🏺', other: '📦' };
+const CATEGORY_ICONS = { kilim: '🧶', ceramic: '🏺', stone: '💎', wood: '🪵', metal: '⚒️', textile: '🧵', glass: '🔮', leather: '👜', spice: '🫙', painting: '🖼️', other: '📦' };
 
-function ProductCard({ product, store, onView3D }) {
+const API_BASE = 'http://localhost:3001';
+
+function ProductCard({ product, store }) {
   const { t } = useTranslation();
   const { format } = useCurrencyPrice();
-  const is3D = product.type === 'kilim' || product.type === 'ceramic';
+  const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+  const handleAddToCart = () => {
+    addItem(product, store);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
 
-  const previewStyle = product.colors
-    ? { background: `linear-gradient(135deg, ${product.colors[0]} 0%, ${product.colors[1] || '#f4f0ea'} 100%)` }
-    : { background: '#ffead7' };
+  const previewStyle = product.photo
+    ? {}
+    : product.colors
+      ? { background: `linear-gradient(135deg, ${product.colors[0]} 0%, ${product.colors[1] || '#f4f0ea'} 100%)` }
+      : { background: '#ffead7' };
 
   return (
-    <article className={`pcard${is3D ? ' pcard--3d' : ''}`}>
+    <article className="pcard">
       {/* Önizleme alanı */}
       <div className="pcard__preview" style={previewStyle}>
-        {is3D && (
-          <div className="pcard__3d-badge">
-            <span className="ms">view_in_ar</span> 3D
-          </div>
+        {product.photo ? (
+          <img
+            src={`${API_BASE}${product.photo}`}
+            alt={product.name}
+            className="pcard__photo"
+          />
+        ) : (
+          <span className="pcard__icon">{CATEGORY_ICONS[product.type] || '📦'}</span>
         )}
-        <span className="pcard__icon">{CATEGORY_ICONS[product.type] || '📦'}</span>
         <div className="pcard__hover-overlay">
-          <button className="pcard__quick-btn">Hızlı Ekle</button>
+          <button className="pcard__quick-btn" onClick={handleAddToCart}>Hızlı Ekle</button>
         </div>
       </div>
 
@@ -51,11 +64,7 @@ function ProductCard({ product, store, onView3D }) {
 
       {/* Aksiyon */}
       <div className="pcard__actions">
-        {is3D ? (
-          <button className="pcard__btn pcard__btn--3d" onClick={() => onView3D(product)}>
-            <span className="ms">view_in_ar</span> {t('storeDetail.view3D')}
-          </button>
-        ) : product.colors ? (
+        {product.colors ? (
           <div className="pcard__colors">
             {product.colors.map((c, i) => (
               <span key={i} className="pcard__color-dot" style={{ backgroundColor: c }} />
@@ -64,18 +73,22 @@ function ProductCard({ product, store, onView3D }) {
         ) : (
           <span />
         )}
-        <button className="pcard__btn pcard__btn--buy">
-          <span className="ms">shopping_cart</span> {t('storeDetail.addToCart')}
+        <button
+          className={`pcard__btn pcard__btn--buy${added ? ' pcard__btn--added' : ''}`}
+          onClick={handleAddToCart}
+        >
+          <span className="ms">{added ? 'check' : 'shopping_cart'}</span>
+          {added ? 'Eklendi!' : t('storeDetail.addToCart')}
         </button>
       </div>
     </article>
   );
 }
 
-function StoreDetailPage({ store: rawStore, onBack }) {
+function StoreDetailPage({ store: rawStore, onBack, onOpenCart }) {
   const { t } = useTranslation();
   const store = useTranslatedStore(rawStore);
-  const [activeProduct, setActiveProduct] = useState(null);
+  const { totalCount } = useCart();
 
   if (!store) return null;
 
@@ -97,7 +110,17 @@ function StoreDetailPage({ store: rawStore, onBack }) {
           </div>
           <div className="sd-navbar__actions">
             <CurrencyRateBadge />
-            <button className="sd-navbar__icon-btn"><span className="ms">shopping_basket</span></button>
+            <button
+              className="sd-navbar__icon-btn sd-navbar__icon-btn--cart"
+              onClick={onOpenCart}
+              aria-label="Sepetim"
+              style={{ position: 'relative' }}
+            >
+              <span className="ms">shopping_bag</span>
+              {totalCount > 0 && (
+                <span className="sd-cart-badge">{totalCount}</span>
+              )}
+            </button>
             <button className="sd-navbar__icon-btn"><span className="ms">person</span></button>
           </div>
         </header>
@@ -165,7 +188,6 @@ function StoreDetailPage({ store: rawStore, onBack }) {
                 key={product.id}
                 product={product}
                 store={store}
-                onView3D={setActiveProduct}
               />
             ))}
           </div>
@@ -186,14 +208,6 @@ function StoreDetailPage({ store: rawStore, onBack }) {
         </div>
       </footer>
 
-      {/* ── 3D Modal ── */}
-      {activeProduct && (
-        <Product3DModal
-          product={activeProduct}
-          store={store}
-          onClose={() => setActiveProduct(null)}
-        />
-      )}
     </div>
   );
 }

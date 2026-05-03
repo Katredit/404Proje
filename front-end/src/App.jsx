@@ -8,47 +8,47 @@ import AIDesignPage from './pages/AIDesignPage';
 import SellerPage from './pages/SellerPage';
 import SellerDashboard from './pages/SellerDashboard';
 import AuthPage from './pages/AuthPage';
+import CheckoutPage from './pages/CheckoutPage';
+import CartDrawer from './components/CartDrawer';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import CurrencyRateBadge from './components/CurrencyRateBadge';
 import { stores as staticStores, positions as storePositions } from './data/stores';
+import api from './services/api';
 import { useAuth } from './context/AuthContext';
+import { useCart } from './context/CartContext';
 import './App.css';
 
 function App() {
   const { t } = useTranslation();
   const { user, loading: authLoading, logout } = useAuth();
+  const { totalCount, setIsOpen: setCartOpen } = useCart();
   const [selectedStore, setSelectedStore] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller' | 'dashboard'
+  const [activePage, setActivePage] = useState('market'); // 'market' | 'ai' | 'seller' | 'dashboard' | 'checkout'
   const [visitingStore, setVisitingStore] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
 
-  // Dinamik satıcılar: localStorage'dan yükle
-  const [dynamicStores, setDynamicStores] = useState(() => {
-    try {
-      const saved = localStorage.getItem('kappadokya_sellers');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  // Backend'den gelen mağazalar
+  const [apiStores, setApiStores] = useState([]);
 
-  // Tüm mağazalar = statik + dinamik
-  const allStores = [...staticStores, ...dynamicStores];
+  const fetchStores = () => {
+    api.get('/stores').then((res) => setApiStores(res.data)).catch(() => {});
+  };
 
-  // Yeni satıcı ekle (eski localStorage tabanlı akış için)
-  const handleAddSeller = (sellerData) => {
-    const newStore = {
-      ...sellerData,
-      id: Date.now(),
-      rating: 5.0,
-      reviewCount: 0,
-      products: [],
-      badge: 'Yeni',
-      position: storePositions[(dynamicStores.length + staticStores.length) % storePositions.length],
-    };
-    const updated = [...dynamicStores, newStore];
-    setDynamicStores(updated);
-    localStorage.setItem('kappadokya_sellers', JSON.stringify(updated));
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  // Tüm mağazalar = statik + backend'den gelen
+  const allStores = [
+    ...staticStores,
+    ...apiStores.filter((s) => !staticStores.some((st) => String(st.id) === String(s.id))),
+  ];
+
+  // Yeni satıcı ekle (backend kayıt sonrası store listesini yenile)
+  const handleAddSeller = () => {
+    fetchStores();
     setActivePage('market');
   };
 
@@ -59,7 +59,9 @@ function App() {
         <StoreDetailPage
           store={visitingStore}
           onBack={() => setVisitingStore(null)}
+          onOpenCart={() => setCartOpen(true)}
         />
+        <CartDrawer onCheckout={() => { setVisitingStore(null); setActivePage('checkout'); }} />
       </div>
     );
   }
@@ -107,7 +109,14 @@ function App() {
           </nav>
           <div className="navbar__actions">
             <button className="navbar__btn navbar__btn--icon"><span className="ms">search</span></button>
-            <button className="navbar__btn navbar__btn--icon"><span className="ms">shopping_basket</span></button>
+            <button
+              className="navbar__btn navbar__btn--icon navbar__cart-btn"
+              onClick={() => setCartOpen(true)}
+              aria-label="Sepetim"
+            >
+              <span className="ms">shopping_bag</span>
+              {totalCount > 0 && <span className="navbar__cart-badge">{totalCount}</span>}
+            </button>
 
             {authLoading ? null : user ? (
               <div className="navbar__user">
@@ -127,6 +136,14 @@ function App() {
 
       {/* ── Auth Modal ── */}
       {showAuth && <AuthPage onClose={() => setShowAuth(false)} />}
+
+      {/* ── Cart Drawer ── */}
+      <CartDrawer onCheckout={() => setActivePage('checkout')} />
+
+      {/* ── Checkout sayfası ── */}
+      {activePage === 'checkout' && (
+        <CheckoutPage onBack={() => setActivePage('market')} />
+      )}
 
       {/* ── AI Tasarım sayfası ── */}
       {activePage === 'ai' && (
@@ -210,7 +227,15 @@ function App() {
             <StorePanel
               store={selectedStore}
               onClose={() => setSelectedStore(null)}
-              onVisit={(s) => { setVisitingStore(s); setSelectedStore(null); }}
+              onVisit={(s) => {
+                // Güncel ürünleri API'den çek
+                api.get(`/stores/${s.id}`).then((res) => {
+                  setVisitingStore(res.data);
+                }).catch(() => {
+                  setVisitingStore(s);
+                });
+                setSelectedStore(null);
+              }}
             />
           </div>
         )}
