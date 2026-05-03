@@ -806,7 +806,7 @@ export default function SellerDashboard() {
 
                     </span>
 
-                    {p.stock === 0 && <div className="sdash-product-thumb__sold-out">Tükendi</div>}
+                    {p.stock === 0 && <div className="sdash-product-thumb__sold-out"><span>Tükendi</span></div>}
 
                   </div>
 

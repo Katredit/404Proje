@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "brand": "Cappadocia Bazaar",
     "subtitle": "Crafts & Local Products",
@@ -7,9 +7,7 @@
     "aiLong": "AI Design Studio",
     "seller": "Become a Seller",
     "login": "Sign In",
-    "search": "Search...",
-    "myStore": "My Store",
-    "logout": "Logout"
+    "search": "Search..."
   },
   "market": {
     "title": "Cappadocia 3D Bazaar",
@@ -70,29 +68,6 @@
     "errorServer": "Server error: {{code}}",
     "errorNoImage": "API did not return a valid image.",
     "errorGeneric": "An error occurred while generating the image.",
-    "productType": "Product Type",
-    "readyTemplates": "Ready Templates",
-    "designDesc": "Design Description",
-    "required": "*",
-    "photoLabel": "Pattern Photo",
-    "photoHint": "— optional",
-    "photoAdd": "Add photo or drag here",
-    "vazoPlaceholder": "E.g.: A vase in Cappadocia style with tulip motifs in blue and white tones...",
-    "kilimPlaceholder": "E.g.: A kilim with red and navy blue geometric patterns, Anatolian motifs...",
-    "studioTitle": "AI Design Studio",
-    "studioSub": "Create unique designs for traditional Cappadocian crafts with artificial intelligence.",
-    "loadingDetail": "This may take 15–30 seconds",
-    "canvasPlaceholderTitle": "Your design will appear here",
-    "canvasPlaceholderText": "Select a product type from the left panel, write a description and click \"Generate Design\".",
-    "downloadBtn": "Download",
-    "undoBtn": "Undo",
-    "newDesignBtn": "New Design",
-    "editPanelTitle": "Edit Design",
-    "editPlaceholder": "E.g.: \"darken the colors\", \"add a tulip motif in the center\"...",
-    "editApply": "Apply",
-    "editPhotoAdd": "Add pattern photo",
-    "editPhotoApply": "Apply Pattern",
-    "historyLabel": "Design History",
     "presets": {
       "kilim": "Kilim",
       "comlek": "Pottery",
