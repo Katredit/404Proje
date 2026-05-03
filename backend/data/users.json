@@ -6,5 +6,13 @@
     "storeId": "1777775579455",
     "createdAt": "2026-05-03T02:32:38.560Z",
     "id": "1777775558561"
+  },
+  {
+    "email": "denemeadmin@gmail.com",
+    "password": "$2b$10$HzoEmHGqXDvO8anrNJIfTePKygWx8J7mawKSKD5TXDhi29PMjrrqS",
+    "name": "Arda Dönmez",
+    "storeId": "1777780222736",
+    "createdAt": "2026-05-03T03:49:57.782Z",
+    "id": "1777780197782"
   }
 ]

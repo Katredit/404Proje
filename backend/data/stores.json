@@ -37,5 +37,44 @@
     ],
     "createdAt": "2026-05-03T02:32:59.455Z",
     "id": "1777775579455"
+  },
+  {
+    "ownerId": "1777780197782",
+    "name": "Kapadokya Seramik Evi",
+    "owner": "Arda Dönmez",
+    "category": "Seramik",
+    "description": "Mağaza Tanıtımı",
+    "location": "Göreme, Nevşehir",
+    "openSince": 2026,
+    "flag": "🟢",
+    "badge": "Yeni",
+    "color": "#27AE60",
+    "accentColor": "#2ECC71",
+    "roofColor": "#1E8449",
+    "products": [
+      {
+        "id": 1777780261727,
+        "name": "Seramik Porselen",
+        "type": "ceramic",
+        "price": 500,
+        "description": "Açıklama",
+        "stock": 10,
+        "colors": [],
+        "size": "20x80",
+        "height": null,
+        "material": "Seramik",
+        "photo": "/uploads/1777780260208.jpg",
+        "createdAt": "2026-05-03T03:51:01.727Z"
+      }
+    ],
+    "rating": 5,
+    "reviewCount": 0,
+    "position": [
+      0,
+      0,
+      -2
+    ],
+    "createdAt": "2026-05-03T03:50:22.735Z",
+    "id": "1777780222736"
   }
 ]

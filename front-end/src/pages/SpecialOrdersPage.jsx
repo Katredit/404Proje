@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import './SpecialOrdersPage.css';
 
-const TYPE_LABELS = { vazo: 'Vazo', kilim: 'Kilim' };
 const TYPE_ICONS = { vazo: '🏺', kilim: '🧶' };
 
 export default function SpecialOrdersPage({ onBack }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const TYPE_LABELS = { vazo: t('specialOrders.typeVazo'), kilim: t('specialOrders.typeKilim') };
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +27,7 @@ export default function SpecialOrdersPage({ onBack }) {
       const res = await api.get('/custom-orders');
       setOrders(res.data.siparisler || []);
     } catch (err) {
-      setError(err.response?.data?.hata || 'Siparişler yüklenemedi.');
+      setError(err.response?.data?.hata || t('specialOrders.loading'));
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,7 @@ export default function SpecialOrdersPage({ onBack }) {
   const handleSubmitOffer = async () => {
     const price = parseFloat(offerPrice);
     if (!price || price <= 0) {
-      setOfferError('Lütfen geçerli bir fiyat girin.');
+      setOfferError(t('specialOrders.errorPrice'));
       return;
     }
     setOfferLoading(true);
@@ -57,14 +59,14 @@ export default function SpecialOrdersPage({ onBack }) {
         price,
         note: offerNote,
       });
-      setOfferSuccess('Teklifiniz başarıyla gönderildi!');
+      setOfferSuccess(t('specialOrders.successOffer'));
       fetchOrders();
       setTimeout(() => {
         setSelectedOrder(null);
         setOfferSuccess('');
       }, 1500);
     } catch (err) {
-      setOfferError(err.response?.data?.hata || 'Teklif gönderilemedi.');
+      setOfferError(err.response?.data?.hata || t('specialOrders.sendOffer'));
     } finally {
       setOfferLoading(false);
     }
@@ -75,9 +77,9 @@ export default function SpecialOrdersPage({ onBack }) {
       <main className="sop-page">
         <div className="sop-gate">
           <span className="ms sop-gate__icon">storefront</span>
-          <h2>Bu sayfaya yalnızca satıcılar erişebilir</h2>
-          <p>Özel siparişleri görüntülemek için bir dükkan sahibi olmanız gerekiyor.</p>
-          <button className="sop-btn sop-btn--primary" onClick={onBack}>Geri Dön</button>
+          <h2>{t('specialOrders.gateSellerTitle')}</h2>
+          <p>{t('specialOrders.gateSellerText')}</p>
+          <button className="sop-btn sop-btn--primary" onClick={onBack}>{t('specialOrders.goBack')}</button>
         </div>
       </main>
     );
@@ -92,7 +94,7 @@ export default function SpecialOrdersPage({ onBack }) {
         <div>
           <h1 className="sop-title">
             <span className="ms">palette</span>
-            Özel Siparişler
+            {t('specialOrders.titleSeller')}
           </h1>
         </div>
         <button className="sop-refresh-btn" onClick={fetchOrders} title="Yenile">
@@ -103,7 +105,7 @@ export default function SpecialOrdersPage({ onBack }) {
       {loading && (
         <div className="sop-loading">
           <div className="sop-spinner" />
-          <span>Siparişler yükleniyor...</span>
+          <span>{t('specialOrders.loading')}</span>
         </div>
       )}
 
@@ -112,8 +114,8 @@ export default function SpecialOrdersPage({ onBack }) {
       {!loading && !error && orders.length === 0 && (
         <div className="sop-empty">
           <span className="ms sop-empty__icon">inbox</span>
-          <h3>Henüz özel sipariş yok</h3>
-          <p>Müşteriler yapay zeka ile tasarım oluşturdukça burada görünecek.</p>
+          <h3>{t('specialOrders.emptySellerTitle')}</h3>
+          <p>{t('specialOrders.emptySellerText')}</p>
         </div>
       )}
 
@@ -124,7 +126,7 @@ export default function SpecialOrdersPage({ onBack }) {
               <div className="sop-card__image-wrap">
                 <img
                   src={`data:image/png;base64,${order.imageBase64}`}
-                  alt={`${TYPE_LABELS[order.productType]} tasarımı`}
+                  alt={TYPE_LABELS[order.productType]}
                   className="sop-card__image"
                 />
                 <div className="sop-card__type-badge">
@@ -132,13 +134,13 @@ export default function SpecialOrdersPage({ onBack }) {
                 </div>
                 {order.status === 'accepted' && (
                   <div className="sop-card__status-badge sop-card__status-badge--accepted">
-                    Teklif Kabul Edildi
+                    {t('specialOrders.statusAccepted')}
                   </div>
                 )}
               </div>
 
               <div className="sop-card__body">
-                <p className="sop-card__prompt">{order.prompt || 'Açıklama yok'}</p>
+                <p className="sop-card__prompt">{order.prompt || t('specialOrders.noDescription')}</p>
                 {order.note && <p className="sop-card__note">📝 {order.note}</p>}
 
                 <div className="sop-card__meta">
@@ -146,7 +148,7 @@ export default function SpecialOrdersPage({ onBack }) {
                     <span className="ms">person</span> {order.customerName}
                   </span>
                   <span className="sop-card__offers">
-                    <span className="ms">local_offer</span> {order.offerCount} teklif
+                    <span className="ms">local_offer</span> {t('specialOrders.offerCount', { count: order.offerCount })}
                   </span>
                 </div>
 
@@ -159,7 +161,7 @@ export default function SpecialOrdersPage({ onBack }) {
                 {order.myOffer && (
                   <div className="sop-card__my-offer">
                     <span className="ms">check_circle</span>
-                    Teklifiniz: <strong>{order.myOffer.price.toLocaleString('tr-TR')} ₺</strong>
+                    {t('specialOrders.myOffer')} <strong>{order.myOffer.price.toLocaleString('tr-TR')} ₺</strong>
                     {order.myOffer.note && <span className="sop-card__my-offer-note"> — {order.myOffer.note}</span>}
                   </div>
                 )}
@@ -170,7 +172,7 @@ export default function SpecialOrdersPage({ onBack }) {
                     onClick={() => handleOpenOffer(order)}
                   >
                     <span className="ms">{order.myOffer ? 'edit' : 'local_offer'}</span>
-                    {order.myOffer ? 'Teklifi Güncelle' : 'Teklif Ver'}
+                    {order.myOffer ? t('specialOrders.updateOffer') : t('specialOrders.makeOffer')}
                   </button>
                 )}
               </div>
@@ -185,7 +187,7 @@ export default function SpecialOrdersPage({ onBack }) {
           <div className="sop-modal" onClick={(e) => e.stopPropagation()}>
             <div className="sop-modal__header">
               <h2 className="sop-modal__title">
-                {TYPE_ICONS[selectedOrder.productType]} Fiyat Teklifi Ver
+                {TYPE_ICONS[selectedOrder.productType]} {t('specialOrders.modalTitle')}
               </h2>
               <button className="sop-modal__close" onClick={() => setSelectedOrder(null)}>
                 <span className="ms">close</span>
@@ -202,7 +204,7 @@ export default function SpecialOrdersPage({ onBack }) {
                 <div className="sop-modal__type">
                   {TYPE_LABELS[selectedOrder.productType]}
                 </div>
-                <p className="sop-modal__prompt">{selectedOrder.prompt || 'Açıklama yok'}</p>
+                <p className="sop-modal__prompt">{selectedOrder.prompt || t('specialOrders.noDescription')}</p>
                 {selectedOrder.note && (
                   <p className="sop-modal__note">📝 {selectedOrder.note}</p>
                 )}
@@ -212,7 +214,7 @@ export default function SpecialOrdersPage({ onBack }) {
             <div className="sop-modal__form">
               <div className="sop-modal__field">
                 <label className="sop-modal__label">
-                  Fiyat Teklifiniz (₺) <span className="sop-req">*</span>
+                  {t('specialOrders.priceLabel')} <span className="sop-req">*</span>
                 </label>
                 <input
                   type="number"
@@ -225,11 +227,11 @@ export default function SpecialOrdersPage({ onBack }) {
                 />
               </div>
               <div className="sop-modal__field">
-                <label className="sop-modal__label">Notunuz (opsiyonel)</label>
+                <label className="sop-modal__label">{t('specialOrders.noteLabel')}</label>
                 <textarea
                   className="sop-modal__textarea"
                   rows={3}
-                  placeholder="Üretim süresi, kargo bilgisi vb..."
+                  placeholder={t('specialOrders.notePlaceholder')}
                   value={offerNote}
                   onChange={(e) => setOfferNote(e.target.value)}
                   maxLength={300}
@@ -245,7 +247,7 @@ export default function SpecialOrdersPage({ onBack }) {
                   onClick={() => setSelectedOrder(null)}
                   disabled={offerLoading}
                 >
-                  İptal
+                  {t('specialOrders.cancel')}
                 </button>
                 <button
                   className="sop-btn sop-btn--primary"
@@ -253,8 +255,8 @@ export default function SpecialOrdersPage({ onBack }) {
                   disabled={offerLoading}
                 >
                   {offerLoading
-                    ? <><span className="sop-spinner sop-spinner--sm" />Gönderiliyor...</>
-                    : <><span className="ms">send</span>Teklifi Gönder</>
+                    ? <><span className="sop-spinner sop-spinner--sm" />{t('specialOrders.sending')}</>
+                    : <><span className="ms">send</span>{t('specialOrders.sendOffer')}</>
                   }
                 </button>
               </div>

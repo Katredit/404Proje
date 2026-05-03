@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import './AIDesignPage.css';
@@ -6,23 +7,24 @@ import './AIDesignPage.css';
 const BASE_URL = 'http://localhost:5000';
 
 const PRODUCT_TYPES = [
-  { key: 'vazo',  label: 'Vazo',  emoji: '🏺' },
-  { key: 'kilim', label: 'Kilim', emoji: '🧶' },
+  { key: 'vazo', emoji: '🏺' },
+  { key: 'kilim', emoji: '🧶' },
 ];
 
 const PRESETS = {
   vazo: [
-    { key: 'vazo_kapadokya', label: 'Kapadokya', prompt: 'Kapadokya toprak tonlarında geleneksel Türk vazo tasarımı, lale ve geometrik motifler', emoji: '🏺' },
-    { key: 'vazo_iznik',     label: 'İznik',     prompt: 'İznik çini desenli mavi-beyaz vazo, lale ve sümbül motifleri', emoji: '🌷' },
-    { key: 'vazo_selcuk',    label: 'Selçuklu',  prompt: 'Selçuklu sanatı geometrik motifli Türk vazosu, kırmızı ve lacivert', emoji: '✦' },
+    { key: 'vazo_kapadokya', emoji: '🏺' },
+    { key: 'vazo_iznik', emoji: '🌷' },
+    { key: 'vazo_selcuk', emoji: '✦' },
   ],
   kilim: [
-    { key: 'kilim_anadolu', label: 'Anadolu', prompt: 'Kırmızı ve lacivert tonlarda geometrik Anadolu kilim deseni', emoji: '🧶' },
-    { key: 'kilim_bergama', label: 'Bergama', prompt: 'Geleneksel Bergama kilimi, koyu kırmızı ve beyaz geometrik motifler', emoji: '🔴' },
-    { key: 'kilim_konya',   label: 'Konya',   prompt: 'Konya yöresi kilimi, yıldız motifleri ve pastel renkler', emoji: '⭐' },
+    { key: 'kilim_anadolu', emoji: '🧶' },
+    { key: 'kilim_bergama', emoji: '🔴' },
+    { key: 'kilim_konya', emoji: '⭐' },
   ],
 };
 export default function AIDesignPage({ onBack, onNavigate }) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [productType, setProductType]   = useState('vazo');
   const [prompt, setPrompt]             = useState('');
@@ -51,6 +53,11 @@ export default function AIDesignPage({ onBack, onNavigate }) {
 
   const toDataUrl = (b64) => `data:image/png;base64,${b64}`;
 
+  useEffect(() => {
+    if (!activePreset) return;
+    setPrompt(t(`ai.presetPrompt_${activePreset}`));
+  }, [activePreset, i18n.language, t]);
+
   const handleProductTypeChange = (type) => {
     setProductType(type);
     setActivePreset(null);
@@ -58,7 +65,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
   };
 
   const handlePreset = (preset) => {
-    setPrompt(preset.prompt);
+    setPrompt(t(`ai.presetPrompt_${preset.key}`));
     setActivePreset(preset.key);
     promptRef.current?.focus();
   };
@@ -74,7 +81,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) { setError('Lütfen bir tasarım açıklaması girin.'); return; }
+    if (!prompt.trim()) { setError(t('ai.errPrompt')); return; }
     setError('');
     setLoading(true);
     setResult(null);
@@ -84,7 +91,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
       let imgSrc;
       if (photo) {
         const form = new FormData();
-        form.append('istek', `${productType} tasarımı: ${prompt}`);
+        form.append('istek', `${productType} ${t('ai.promptLabel').toLowerCase()}: ${prompt}`);
         form.append('fotograf', photo);
         const res = await fetch(`${BASE_URL}/uret`, { method: 'POST', body: form });
         if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
@@ -113,7 +120,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
   };
 
   const handleEdit = async () => {
-    if (!sessionId || !editPrompt.trim()) { setEditError('Düzenleme açıklaması girin.'); return; }
+    if (!sessionId || !editPrompt.trim()) { setEditError(t('ai.errEditPrompt')); return; }
     setEditError('');
     setEditLoading(true);
     try {
@@ -153,7 +160,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
       setResult(imgSrc);
       setCanUndo(true);
       setEditPhoto(null);
-      setHistory((h) => [{ url: imgSrc, prompt: 'Desen fotoğrafı uygulandı', ts: Date.now() }, ...h.slice(0, 7)]);
+      setHistory((h) => [{ url: imgSrc, prompt: t('ai.patternApplied'), ts: Date.now() }, ...h.slice(0, 7)]);
     } catch (err) {
       setEditError(err.message || 'Bir hata oluştu.');
     } finally {
@@ -196,7 +203,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
 
   const handleSubmitOrder = async () => {
     if (!result) return;
-    if (!user) { setOrderError('Sipariş vermek için giriş yapmanız gerekiyor.'); return; }
+    if (!user) { setOrderError(t('ai.errLogin')); return; }
     setOrderLoading(true);
     setOrderError('');
     setOrderSuccess(false);
@@ -226,17 +233,17 @@ export default function AIDesignPage({ onBack, onNavigate }) {
 
           <div className="ai-page__sidebar-header">
             <div className="ai-page__sidebar-top">
-              <h1 className="ai-page__sidebar-title">AI Tasarım Stüdyosu</h1>
-              <span className="ai-page__beta-badge">Beta</span>
+              <h1 className="ai-page__sidebar-title">{t('ai.title')}</h1>
+              <span className="ai-page__beta-badge">{t('ai.beta')}</span>
             </div>
             <p className="ai-page__sidebar-sub">
-              Geleneksel Kapadokya el sanatları için yapay zeka ile özgün tasarımlar oluşturun.
+              {t('ai.subtitle')}
             </p>
           </div>
 
           {/* Ürün tipi */}
           <div className="ai-page__section">
-            <label className="ai-page__label">Ürün Tipi</label>
+            <label className="ai-page__label">{t('ai.productType')}</label>
             <div className="ai-page__type-group">
               {PRODUCT_TYPES.map((pt) => (
                 <button
@@ -245,7 +252,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                   onClick={() => handleProductTypeChange(pt.key)}
                 >
                   <span>{pt.emoji}</span>
-                  <span>{pt.label}</span>
+                  <span>{t(`ai.type_${pt.key}`)}</span>
                 </button>
               ))}
             </div>
@@ -253,7 +260,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
 
           {/* Şablonlar */}
           <div className="ai-page__section">
-            <label className="ai-page__label">Hazır Şablonlar</label>
+            <label className="ai-page__label">{t('ai.presets')}</label>
             <div className="ai-page__presets">
               {PRESETS[productType].map((p) => (
                 <button
@@ -262,7 +269,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                   onClick={() => handlePreset(p)}
                 >
                   <span>{p.emoji}</span>
-                  <span>{p.label}</span>
+                  <span>{t(`ai.preset_${p.key}`)}</span>
                 </button>
               ))}
             </div>
@@ -271,7 +278,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
           {/* Tasarım açıklaması */}
           <div className="ai-page__section">
             <label className="ai-page__label" htmlFor="ai-prompt">
-              Tasarım Açıklaması <span className="ai-page__required">*</span>
+              {t('ai.promptLabel')} <span className="ai-page__required">*</span>
             </label>
             <textarea
               id="ai-prompt"
@@ -279,8 +286,8 @@ export default function AIDesignPage({ onBack, onNavigate }) {
               className="ai-page__textarea"
               placeholder={
                 productType === 'vazo'
-                  ? 'Örn: Mavi ve beyaz tonlarda lale motifli, Kapadokya stilinde bir vazo...'
-                  : 'Örn: Kırmızı ve lacivert geometrik desenli, Anadolu motifli kilim...'
+                  ? t('ai.promptPh_vazo')
+                  : t('ai.promptPh_kilim')
               }
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -291,7 +298,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
           {/* Desen fotoğrafı */}
           <div className="ai-page__section">
             <label className="ai-page__label">
-              Desen Fotoğrafı <span className="ai-page__label-hint">— opsiyonel</span>
+              {t('ai.photoLabel')} <span className="ai-page__label-hint">{t('ai.photoOptional')}</span>
             </label>
             <div
               className={`ai-page__upload${dragOver ? ' ai-page__upload--drag' : ''}${photo ? ' ai-page__upload--has-file' : ''}`}
@@ -309,7 +316,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
               />
               {photo ? (
                 <div className="ai-page__upload-preview">
-                  <img src={URL.createObjectURL(photo)} alt="önizleme" />
+                  <img src={URL.createObjectURL(photo)} alt={t('ai.photoPreviewAlt')} />
                   <div className="ai-page__upload-preview-name">{photo.name}</div>
                   <button
                     className="ai-page__upload-remove"
@@ -321,7 +328,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
               ) : (
                 <div className="ai-page__upload-empty">
                   <span className="ms">add_photo_alternate</span>
-                  <span>Fotoğraf ekle veya sürükle</span>
+                  <span>{t('ai.photoUpload')}</span>
                 </div>
               )}
             </div>
@@ -335,8 +342,8 @@ export default function AIDesignPage({ onBack, onNavigate }) {
             disabled={loading}
           >
             {loading
-              ? <><span className="ai-page__spinner" />Oluşturuluyor...</>
-              : <><span className="ms">auto_awesome</span>Tasarım Oluştur</>
+              ? <><span className="ai-page__spinner" />{t('ai.generating')}</>
+              : <><span className="ms">auto_awesome</span>{t('ai.generate')}</>
             }
           </button>
 
@@ -351,28 +358,28 @@ export default function AIDesignPage({ onBack, onNavigate }) {
             {loading && (
               <div className="ai-page__loading">
                 <div className="ai-page__loading-ring" />
-                <p>Tasarımınız oluşturuluyor...</p>
-                <span>Bu işlem 15–30 saniye sürebilir</span>
+                <p>{t('ai.loadingTitle')}</p>
+                <span>{t('ai.loadingSub')}</span>
               </div>
             )}
 
             {!loading && result && (
               <div className="ai-page__result">
-                <img src={result} alt="AI Tasarım" className="ai-page__result-img" />
+                <img src={result} alt={t('ai.title')} className="ai-page__result-img" />
                 <div className="ai-page__result-actions">
                   <a href={result} download="kapadokya-tasarim.png" className="ai-page__result-btn">
-                    <span className="ms">download</span>İndir
+                    <span className="ms">download</span>{t('ai.download')}
                   </a>
                   {canUndo && (
                     <button className="ai-page__result-btn ai-page__result-btn--outline" onClick={handleUndo} disabled={editLoading}>
-                      <span className="ms">undo</span>Geri Al
+                      <span className="ms">undo</span>{t('ai.undo')}
                     </button>
                   )}
                   <button
                     className="ai-page__result-btn ai-page__result-btn--outline"
                     onClick={handleReset}
                   >
-                    <span className="ms">refresh</span>Yeni Tasarım
+                    <span className="ms">refresh</span>{t('ai.newDesign')}
                   </button>
                 </div>
 
@@ -381,14 +388,14 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                   <div className="ai-page__order-panel">
                     <div className="ai-page__order-panel__title">
                       <span className="ms">send</span>
-                      Özel Sipariş Ver
+                      {t('ai.orderTitle')}
                     </div>
                     <p className="ai-page__order-panel__desc">
-                      Bu tasarımı tüm satıcılara gönderin, fiyat teklifleri alın ve en uygununu seçin.
+                      {t('ai.orderDesc')}
                     </p>
                     <textarea
                       className="ai-page__textarea ai-page__textarea--sm"
-                      placeholder="Ek notunuz (opsiyonel): Boyut, renk tercihi, teslimat süresi..."
+                      placeholder={t('ai.orderNotePh')}
                       value={orderNote}
                       onChange={(e) => setOrderNote(e.target.value)}
                       rows={2}
@@ -401,8 +408,8 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                       disabled={orderLoading}
                     >
                       {orderLoading
-                        ? <><span className="ai-page__spinner ai-page__spinner--sm" />Gönderiliyor...</>
-                        : <><span className="ms">storefront</span>Satıcılara Gönder</>
+                        ? <><span className="ai-page__spinner ai-page__spinner--sm" />{t('ai.sending')}</>
+                        : <><span className="ms">storefront</span>{t('ai.sendToSellers')}</>
                       }
                     </button>
                   </div>
@@ -410,14 +417,14 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                   <div className="ai-page__order-success">
                     <span className="ms">check_circle</span>
                     <div>
-                      <strong>Siparişiniz gönderildi!</strong>
-                      <p>Satıcılar tekliflerini hazırlıyor. "Özel Siparişlerim" sayfasından takip edebilirsiniz.</p>
+                      <strong>{t('ai.orderSent')}</strong>
+                      <p>{t('ai.orderSentDesc')}</p>
                     </div>
                     <button
                       className="ai-page__result-btn"
                       onClick={() => onNavigate?.('my-special-orders')}
                     >
-                      <span className="ms">arrow_forward</span>Siparişlerimi Gör
+                      <span className="ms">arrow_forward</span>{t('ai.viewOrders')}
                     </button>
                   </div>
                 )}
@@ -429,8 +436,8 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                 <div className="ai-page__placeholder-icon-wrap">
                   <span className="ms" style={{ fontVariationSettings: "'FILL' 1" }}>palette</span>
                 </div>
-                <h2>Tasarımınız burada görünecek</h2>
-                <p>Sol panelden ürün tipi seçin, açıklama yazın ve "Tasarım Oluştur"a tıklayın.</p>
+                <h2>{t('ai.placeholderTitle')}</h2>
+                <p>{t('ai.placeholderSub')}</p>
               </div>
             )}
           </div>
@@ -440,13 +447,13 @@ export default function AIDesignPage({ onBack, onNavigate }) {
             <div className="ai-page__edit-panel">
               <div className="ai-page__edit-panel__title">
                 <span className="ms">edit</span>
-                Tasarımı Düzenle
+                {t('ai.editTitle')}
               </div>
 
               <div className="ai-page__edit-row">
                 <textarea
                   className="ai-page__textarea ai-page__textarea--sm"
-                  placeholder='Örn: "renkleri koyulaştır", "ortaya lale motifi ekle"...'
+                  placeholder={t('ai.editPh')}
                   value={editPrompt}
                   onChange={(e) => setEditPrompt(e.target.value)}
                   rows={2}
@@ -460,7 +467,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                     ? <span className="ai-page__spinner ai-page__spinner--sm" />
                     : <span className="ms">auto_fix_high</span>
                   }
-                  Uygula
+                  {t('ai.apply')}
                 </button>
               </div>
 
@@ -481,7 +488,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                   />
                   {editPhoto ? (
                     <div className="ai-page__upload-preview ai-page__upload-preview--sm">
-                      <img src={URL.createObjectURL(editPhoto)} alt="desen" />
+                      <img src={URL.createObjectURL(editPhoto)} alt={t('ai.editPhotoPreviewAlt')} />
                       <span className="ai-page__upload-preview-name">{editPhoto.name}</span>
                       <button
                         className="ai-page__upload-remove"
@@ -493,7 +500,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                   ) : (
                     <div className="ai-page__upload-empty">
                       <span className="ms">add_photo_alternate</span>
-                      <span>Desen fotoğrafı ekle</span>
+                      <span>{t('ai.editPhotoUpload')}</span>
                     </div>
                   )}
                 </div>
@@ -506,7 +513,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
                     ? <span className="ai-page__spinner ai-page__spinner--sm" />
                     : <span className="ms">brush</span>
                   }
-                  Deseni Uygula
+                  {t('ai.applyPattern')}
                 </button>
               </div>
 
@@ -517,7 +524,7 @@ export default function AIDesignPage({ onBack, onNavigate }) {
           {history.length > 0 && (
             <div className="ai-page__history">
               <div className="ai-page__history-header">
-                <span className="ai-page__history-title">Geçmiş Tasarımlar</span>
+                <span className="ai-page__history-title">{t('ai.history')}</span>
               </div>
               <div className="ai-page__history-grid">
                 {history.map((item) => (

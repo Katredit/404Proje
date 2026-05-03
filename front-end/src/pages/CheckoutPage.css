@@ -679,6 +679,165 @@
   }
 }
 
+/* =======================================
+   CARBON OFFSET CARD
+   ======================================= */
+
+.carbon-offset-card {
+  border-radius: 14px;
+  border: 1.5px solid #c8dfc8;
+  padding: 16px;
+  background: #f5faf5;
+  margin-top: 12px;
+  animation: carbonFadeIn 0.4s ease;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.carbon-offset-card--active {
+  border-color: #4a9a5a;
+  background: #eaf5ec;
+  box-shadow: 0 0 0 3px rgba(74, 154, 90, 0.12);
+}
+
+.carbon-offset-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.carbon-offset-card__tree {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.carbon-offset-card__texts {
+  flex: 1;
+  min-width: 0;
+}
+
+.carbon-offset-card__title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2a4a2a;
+}
+
+.carbon-offset-card__sub {
+  display: block;
+  font-size: 11px;
+  color: #5a8a5a;
+  margin-top: 1px;
+}
+
+/* Toggle switch */
+.carbon-offset-card__toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.carbon-offset-card__toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.carbon-offset-card__slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 24px;
+  transition: background 0.2s;
+}
+
+.carbon-offset-card__slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.carbon-offset-card__toggle input:checked + .carbon-offset-card__slider {
+  background: #4a9a5a;
+}
+
+.carbon-offset-card__toggle input:checked + .carbon-offset-card__slider::before {
+  transform: translateX(20px);
+}
+
+.carbon-offset-card__desc {
+  font-size: 12px;
+  color: #4a6a4a;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.carbon-offset-card__fee {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #3a6a3a;
+  background: rgba(74, 154, 90, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.carbon-offset-card__fee strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2a5a2a;
+}
+
+/* =======================================
+   CHECKOUT SUCCESS — TEMA BANNER
+   ======================================= */
+
+.checkout-success__tema {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg, #eaf5ec 0%, #d4edd8 100%);
+  border: 1.5px solid #6aab78;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  text-align: left;
+  animation: carbonFadeIn 0.5s ease;
+}
+
+.checkout-success__tema-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.checkout-success__tema strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a4a1a;
+  margin-bottom: 4px;
+}
+
+.checkout-success__tema p {
+  font-size: 12px;
+  color: #3a6a3a;
+  margin: 0;
+  line-height: 1.5;
+}
+
 @media (max-width: 600px) {
   .checkout-card { padding: 20px; }
   .checkout-form__grid { grid-template-columns: 1fr; }

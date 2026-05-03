@@ -1,5 +1,6 @@
 import { useCart } from '../context/CartContext';
 import { useCurrencyPrice } from '../hooks/useCurrencyPrice';
+import { useTranslation } from 'react-i18next';
 import './CartDrawer.css';
 
 const API_BASE = 'http://localhost:3001';
@@ -21,6 +22,7 @@ const CATEGORY_ICONS = {
 function CartItem({ item }) {
   const { removeItem, updateQuantity } = useCart();
   const { format } = useCurrencyPrice();
+  const { t } = useTranslation();
   const { product, store, quantity } = item;
 
   const previewStyle = product.colors
@@ -44,20 +46,20 @@ function CartItem({ item }) {
           <button
             className="cart-item__qty-btn"
             onClick={() => updateQuantity(product.id, store.id, -1)}
-            aria-label="Azalt"
+            aria-label={t('cart.decrease')}
           >−</button>
           <span className="cart-item__qty-num">{quantity}</span>
           <button
             className="cart-item__qty-btn"
             onClick={() => updateQuantity(product.id, store.id, 1)}
-            aria-label="Artır"
+            aria-label={t('cart.increase')}
           >+</button>
         </div>
       </div>
       <button
         className="cart-item__remove"
         onClick={() => removeItem(product.id, store.id)}
-        aria-label="Kaldır"
+        aria-label={t('cart.remove')}
       >
         <span className="ms">close</span>
       </button>
@@ -68,6 +70,7 @@ function CartItem({ item }) {
 export default function CartDrawer({ onCheckout }) {
   const { items, isOpen, setIsOpen, totalCount, totalPrice } = useCart();
   const { format } = useCurrencyPrice();
+  const { t } = useTranslation();
 
   if (!isOpen) return null;
 
@@ -76,17 +79,17 @@ export default function CartDrawer({ onCheckout }) {
   return (
     <>
       <div className="cart-drawer-overlay" onClick={() => setIsOpen(false)} />
-      <aside className="cart-drawer" role="dialog" aria-modal="true" aria-label="Sepetim">
+      <aside className="cart-drawer" role="dialog" aria-modal="true" aria-label={t('cart.title')}>
         {/* Header */}
         <div className="cart-drawer__header">
           <div className="cart-drawer__title">
             <span className="ms">shopping_bag</span>
-            Sepetim
+            {t('cart.title')}
             {totalCount > 0 && (
               <span className="cart-drawer__count">{totalCount}</span>
             )}
           </div>
-          <button className="cart-drawer__close" onClick={() => setIsOpen(false)} aria-label="Kapat">
+          <button className="cart-drawer__close" onClick={() => setIsOpen(false)} aria-label={t('cart.close')}>
             <span className="ms">close</span>
           </button>
         </div>
@@ -96,8 +99,8 @@ export default function CartDrawer({ onCheckout }) {
           {items.length === 0 ? (
             <div className="cart-drawer__empty">
               <span className="ms">shopping_cart</span>
-              <p>Sepetiniz boş</p>
-              <span>Ürünleri keşfetmek için mağazaları ziyaret edin</span>
+              <p>{t('cart.empty')}</p>
+              <span>{t('cart.emptyHint')}</span>
             </div>
           ) : (
             items.map((item, idx) => <CartItem key={idx} item={item} />)
@@ -109,15 +112,15 @@ export default function CartDrawer({ onCheckout }) {
           <div className="cart-drawer__footer">
             <div className="cart-drawer__summary">
               <div className="cart-drawer__summary-row">
-                <span>Ara toplam ({totalCount} ürün)</span>
+                <span>{t('cart.subtotalCount', { count: totalCount })}</span>
                 <span>{format(totalPrice)}</span>
               </div>
               <div className="cart-drawer__summary-row">
-                <span>Kargo</span>
-                <span>{shipping === 0 ? 'Ücretsiz' : format(shipping)}</span>
+                <span>{t('cart.shipping')}</span>
+                <span>{shipping === 0 ? t('cart.shippingFree') : format(shipping)}</span>
               </div>
               <div className="cart-drawer__summary-row cart-drawer__summary-row--total">
-                <span>Toplam</span>
+                <span>{t('cart.total')}</span>
                 <span>{format(totalPrice + shipping)}</span>
               </div>
             </div>
@@ -126,13 +129,13 @@ export default function CartDrawer({ onCheckout }) {
               onClick={() => { setIsOpen(false); onCheckout(); }}
             >
               <span className="ms">payments</span>
-              Alışverişi Tamamla
+              {t('cart.checkout')}
             </button>
             <button
               className="cart-drawer__continue-btn"
               onClick={() => setIsOpen(false)}
             >
-              Alışverişe Devam Et
+              {t('cart.continueShopping')}
             </button>
           </div>
         )}

@@ -1,16 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import './MySpecialOrdersPage.css';
 
-const TYPE_LABELS = { vazo: 'Vazo', kilim: 'Kilim' };
 const TYPE_ICONS = { vazo: '🏺', kilim: '🧶' };
-
-const STATUS_LABELS = {
-  open: 'Teklif Bekleniyor',
-  accepted: 'Teklif Kabul Edildi',
-  completed: 'Tamamlandı',
-};
 
 const STATUS_COLORS = {
   open: '#e0a030',
@@ -19,7 +13,14 @@ const STATUS_COLORS = {
 };
 
 export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const TYPE_LABELS = { vazo: t('specialOrders.typeVazo'), kilim: t('specialOrders.typeKilim') };
+  const STATUS_LABELS = {
+    open: t('specialOrders.statusOpen'),
+    accepted: t('specialOrders.statusAccepted'),
+    completed: t('specialOrders.statusCompleted'),
+  };
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -33,7 +34,7 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
       const res = await api.get('/custom-orders/my');
       setOrders(res.data.siparisler || []);
     } catch (err) {
-      setError(err.response?.data?.hata || 'Siparişler yüklenemedi.');
+      setError(err.response?.data?.hata || t('specialOrders.loading'));
     } finally {
       setLoading(false);
     }
@@ -53,7 +54,7 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
         onCheckoutCustom(acceptedOffer, res.data.siparis);
       }
     } catch (err) {
-      setError(err.response?.data?.hata || 'Teklif kabul edilemedi.');
+      setError(err.response?.data?.hata || t('specialOrders.acceptPay'));
     } finally {
       setAcceptLoading(null);
     }
@@ -64,9 +65,9 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
       <main className="msop-page">
         <div className="msop-gate">
           <span className="ms msop-gate__icon">login</span>
-          <h2>Giriş yapmanız gerekiyor</h2>
-          <p>Özel siparişlerinizi görüntülemek için hesabınıza giriş yapın.</p>
-          <button className="msop-btn msop-btn--primary" onClick={onBack}>Geri Dön</button>
+          <h2>{t('specialOrders.gateLoginTitle')}</h2>
+          <p>{t('specialOrders.gateLoginText')}</p>
+          <button className="msop-btn msop-btn--primary" onClick={onBack}>{t('specialOrders.goBack')}</button>
         </div>
       </main>
     );
@@ -81,7 +82,7 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
         <div>
           <h1 className="msop-title">
             <span className="ms">pending_actions</span>
-            Özel Sipariş Durumum
+            {t('specialOrders.titleBuyer')}
           </h1>
         </div>
         <button className="msop-refresh-btn" onClick={fetchOrders} title="Yenile">
@@ -92,7 +93,7 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
       {loading && (
         <div className="msop-loading">
           <div className="msop-spinner" />
-          <span>Siparişler yükleniyor...</span>
+          <span>{t('specialOrders.loading')}</span>
         </div>
       )}
 
@@ -101,10 +102,10 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
       {!loading && !error && orders.length === 0 && (
         <div className="msop-empty">
           <span className="ms msop-empty__icon">auto_awesome</span>
-          <h3>Henüz özel sipariş vermediniz</h3>
-          <p>Yapay Zeka Tasarım sayfasından bir tasarım oluşturun ve satıcılara gönderin.</p>
+          <h3>{t('specialOrders.emptyBuyerTitle')}</h3>
+          <p>{t('specialOrders.emptyBuyerText')}</p>
           <button className="msop-btn msop-btn--primary" onClick={onBack}>
-            <span className="ms">arrow_back</span> Geri Dön
+            <span className="ms">arrow_back</span> {t('specialOrders.goBack')}
           </button>
         </div>
       )}
@@ -122,7 +123,7 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
                   <div className="msop-card__image-wrap">
                     <img
                       src={`data:image/png;base64,${order.imageBase64}`}
-                      alt={`${TYPE_LABELS[order.productType]} tasarımı`}
+                      alt={TYPE_LABELS[order.productType]}
                       className="msop-card__image"
                     />
                   </div>
@@ -146,7 +147,7 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
                     {acceptedOffer && (
                       <div className="msop-card__accepted-offer">
                         <span className="ms">check_circle</span>
-                        Kabul: <strong>{acceptedOffer.storeName}</strong> — {acceptedOffer.price.toLocaleString('tr-TR')} ₺
+                        {t('specialOrders.acceptedLabel')} <strong>{acceptedOffer.storeName}</strong> — {acceptedOffer.price.toLocaleString('tr-TR')} ₺
                       </div>
                     )}
                   </div>
@@ -162,12 +163,12 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
                     {order.note && (
                       <div className="msop-card__your-note">
                         <span className="ms">notes</span>
-                        Notunuz: {order.note}
+                        {t('specialOrders.yourNote')} {order.note}
                       </div>
                     )}
 
                     <div className="msop-card__date">
-                      Oluşturulma: {new Date(order.createdAt).toLocaleDateString('tr-TR', {
+                      {t('specialOrders.createdAt')} {new Date(order.createdAt).toLocaleDateString('tr-TR', {
                         day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
                       })}
                     </div>
@@ -175,13 +176,13 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
                     {(order.offers || []).length === 0 ? (
                       <div className="msop-no-offers">
                         <span className="ms">hourglass_empty</span>
-                        Henüz teklif gelmedi. Satıcılar tekliflerini hazırlıyor...
+                        {t('specialOrders.noOffers')}
                       </div>
                     ) : (
                       <div className="msop-offers-list">
                         <h4 className="msop-offers-title">
                           <span className="ms">local_offer</span>
-                          Gelen Teklifler ({order.offers.length})
+                          {t('specialOrders.offersTitle', { count: order.offers.length })}
                         </h4>
                         {[...order.offers]
                           .sort((a, b) => a.price - b.price)
@@ -215,8 +216,8 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
                                     disabled={acceptLoading === offer.id}
                                   >
                                     {acceptLoading === offer.id
-                                      ? <><span className="msop-spinner msop-spinner--sm" />İşleniyor...</>
-                                      : <><span className="ms">check_circle</span>Kabul Et & Öde</>
+                                      ? <><span className="msop-spinner msop-spinner--sm" />{t('specialOrders.processing')}</>
+                                      : <><span className="ms">check_circle</span>{t('specialOrders.acceptPay')}</>
                                     }
                                   </button>
                                 )}
@@ -224,7 +225,7 @@ export default function MySpecialOrdersPage({ onBack, onCheckoutCustom }) {
                                 {isAccepted && (
                                   <div className="msop-offer__accepted-badge">
                                     <span className="ms">check_circle</span>
-                                    Kabul Edildi
+                                    {t('specialOrders.acceptedBadge')}
                                   </div>
                                 )}
                               </div>
