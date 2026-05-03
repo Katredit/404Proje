@@ -7,7 +7,9 @@
     "aiLong": "Estudio de Diseño IA",
     "seller": "Convertirse en Vendedor",
     "login": "Iniciar Sesión",
-    "search": "Buscar..."
+    "search": "Buscar...",
+    "myStore": "Mi Tienda",
+    "logout": "Cerrar Sesión"
   },
   "market": {
     "title": "Bazar 3D de Capadocia",
