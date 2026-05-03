@@ -1,4 +1,4 @@
-import subprocess, sys
+import subprocess, sys, os, threading
 
 def pip(p):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", p])
@@ -11,7 +11,7 @@ pip("numpy")
 pip("requests")
 pip("rembg[cpu]")
 
-import os, json, time, base64, threading, random
+import json, time, base64, random
 import numpy as np
 from io import BytesIO
 from groq import Groq
@@ -37,7 +37,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ─────────────────────────────────────────────────────
-# SABITLER
+# SABİTLER
 # ─────────────────────────────────────────────────────
 URUN_BOYUTLARI = {
     "vazo":   (512, 512),
@@ -47,28 +47,27 @@ URUN_BOYUTLARI = {
     "kilim":  (768, 512),
 }
 
-# Kilim için özel motif çevirici — Türkçe/genel → kilim motif dili
 KILIM_MOTIF_SOZLUGU = {
-    "peri bacasi":  "tall cone-shaped rock formation silhouette motifs as repeating woven geometric symbols",
-    "peri bacası":  "tall cone-shaped rock formation silhouette motifs as repeating woven geometric symbols",
-    "fairy chimney":"tall cone-shaped rock formation silhouette motifs as repeating woven geometric symbols",
-    "kapadokya":    "Cappadocia cone rock formation symbols, cave dwelling woven motifs",
-    "cappadocia":   "Cappadocia cone rock formation symbols, cave dwelling woven motifs",
-    "cicek":        "stylized eight-pointed star flower medallion woven motifs",
-    "çiçek":        "stylized eight-pointed star flower medallion woven motifs",
-    "floral":       "stylized eight-pointed star flower medallion woven motifs",
-    "hayat agaci":  "tree of life woven motif, branching vertical symmetry",
-    "hayat ağacı":  "tree of life woven motif, branching vertical symmetry",
-    "nazar":        "evil eye protective concentric diamond medallion woven symbol",
-    "nazarlik":     "evil eye protective concentric diamond medallion woven symbol",
-    "yildiz":       "eight-pointed star medallion repeating woven pattern",
-    "yıldız":       "eight-pointed star medallion repeating woven pattern",
-    "star":         "eight-pointed star medallion repeating woven pattern",
-    "geometrik":    "bold interlocking diamond and chevron woven geometric symbols",
-    "geometric":    "bold interlocking diamond and chevron woven geometric symbols",
-    "at":           "stylized horse silhouette woven geometric motifs",
-    "kus":          "stylized bird silhouette woven geometric motifs",
-    "kuş":          "stylized bird silhouette woven geometric motifs",
+    "peri bacasi":   "tall cone-shaped rock formation silhouette motifs as repeating woven geometric symbols",
+    "peri bacası":   "tall cone-shaped rock formation silhouette motifs as repeating woven geometric symbols",
+    "fairy chimney": "tall cone-shaped rock formation silhouette motifs as repeating woven geometric symbols",
+    "kapadokya":     "Cappadocia cone rock formation symbols, cave dwelling woven motifs",
+    "cappadocia":    "Cappadocia cone rock formation symbols, cave dwelling woven motifs",
+    "cicek":         "stylized eight-pointed star flower medallion woven motifs",
+    "çiçek":         "stylized eight-pointed star flower medallion woven motifs",
+    "floral":        "stylized eight-pointed star flower medallion woven motifs",
+    "hayat agaci":   "tree of life woven motif, branching vertical symmetry",
+    "hayat ağacı":   "tree of life woven motif, branching vertical symmetry",
+    "nazar":         "evil eye protective concentric diamond medallion woven symbol",
+    "nazarlik":      "evil eye protective concentric diamond medallion woven symbol",
+    "yildiz":        "eight-pointed star medallion repeating woven pattern",
+    "yıldız":        "eight-pointed star medallion repeating woven pattern",
+    "star":          "eight-pointed star medallion repeating woven pattern",
+    "geometrik":     "bold interlocking diamond and chevron woven geometric symbols",
+    "geometric":     "bold interlocking diamond and chevron woven geometric symbols",
+    "at":            "stylized horse silhouette woven geometric motifs",
+    "kus":           "stylized bird silhouette woven geometric motifs",
+    "kuş":           "stylized bird silhouette woven geometric motifs",
 }
 
 KILIM_PROMPT_SABLONLARI = [
@@ -158,12 +157,14 @@ def prompt_olustur(analiz):
         "comlek": "handcrafted clay pot with lid, white background, photorealistic 8K",
     }
     if sade_mi:
-        return f"{desen} {urun_baglam.get(urun_tipi,'ceramic product')}, {kultur_eki}{renk_eki}studio lighting, photorealistic 8K"
-    return f"{desen}, {kultur_eki}{renk_eki}{urun_baglam.get(urun_tipi,'handcrafted product, white background, photorealistic 8K')}"
+        return (f"{desen} {urun_baglam.get(urun_tipi,'ceramic product')}, "
+                f"{kultur_eki}{renk_eki}studio lighting, photorealistic 8K")
+    return (f"{desen}, {kultur_eki}{renk_eki}"
+            f"{urun_baglam.get(urun_tipi,'handcrafted product, white background, photorealistic 8K')}")
 
 
 # ─────────────────────────────────────────────────────
-# 3. GÖRSEL ÜRETİMİ (prompt modu — API çağrısı)
+# 3. GÖRSEL ÜRETİMİ
 # ─────────────────────────────────────────────────────
 def gorsel_uret(prompt, urun_tipi="vazo"):
     genislik, yukseklik = URUN_BOYUTLARI.get(urun_tipi, (512, 512))
@@ -177,7 +178,7 @@ def gorsel_uret(prompt, urun_tipi="vazo"):
         purl    = (f"https://image.pollinations.ai/prompt/{encoded}"
                    f"?width={genislik}&height={yukseklik}&nologo=true&model=flux&seed={seed}&enhance=true")
         r = req.get(purl, timeout=70)
-        if r.status_code == 200 and "image" in r.headers.get("content-type",""):
+        if r.status_code == 200 and "image" in r.headers.get("content-type", ""):
             img = Image.open(BytesIO(r.content)).convert("RGB")
             if np.array(img.convert("L")).mean() > 15:
                 print("  ✅ Pollinations")
@@ -197,9 +198,10 @@ def gorsel_uret(prompt, urun_tipi="vazo"):
                "options": {"wait_for_model": True}}
     for _ in range(2):
         try:
-            r2 = req.post("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
-                          headers=headers, json=payload, timeout=90)
-            if r2.status_code == 200 and "image" in r2.headers.get("content-type",""):
+            r2 = req.post(
+                "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+                headers=headers, json=payload, timeout=90)
+            if r2.status_code == 200 and "image" in r2.headers.get("content-type", ""):
                 img = Image.open(BytesIO(r2.content)).convert("RGB")
                 if np.array(img.convert("L")).mean() > 15:
                     print("  ✅ HuggingFace")
@@ -221,21 +223,18 @@ def gorsel_uret(prompt, urun_tipi="vazo"):
 
 # ─────────────────────────────────────────────────────
 # 4. KİLİM KENAR TEMİZLEME
-#    Pollinations etrafına bitki/obje ekliyor.
-#    Beyaz olmayan kenarları tespit edip kırpar.
 # ─────────────────────────────────────────────────────
 def kilim_kenarlari_temizle(img):
     w, h  = img.size
     arr   = np.array(img, dtype=np.float32)
     beyaz = (arr[:,:,0] > 180) & (arr[:,:,1] > 180) & (arr[:,:,2] > 180)
-    dolu_satir  = (~beyaz).mean(axis=1) > 0.08
-    dolu_sutun  = (~beyaz).mean(axis=0) > 0.08
-
+    dolu_satir = (~beyaz).mean(axis=1) > 0.08
+    dolu_sutun = (~beyaz).mean(axis=0) > 0.08
     if dolu_satir.any() and dolu_sutun.any():
-        y1 = max(0,   int(np.where(dolu_satir)[0][0])  - 6)
-        y2 = min(h,   int(np.where(dolu_satir)[0][-1]) + 6)
-        x1 = max(0,   int(np.where(dolu_sutun)[0][0])  - 6)
-        x2 = min(w,   int(np.where(dolu_sutun)[0][-1]) + 6)
+        y1 = max(0, int(np.where(dolu_satir)[0][0])  - 6)
+        y2 = min(h, int(np.where(dolu_satir)[0][-1]) + 6)
+        x1 = max(0, int(np.where(dolu_sutun)[0][0])  - 6)
+        x2 = min(w, int(np.where(dolu_sutun)[0][-1]) + 6)
         if (x2-x1) > w*0.3 and (y2-y1) > h*0.3:
             print(f"  ✂️ Kenar temizlendi: ({x1},{y1})→({x2},{y2})")
             return img.crop((x1, y1, x2, y2))
@@ -243,9 +242,7 @@ def kilim_kenarlari_temizle(img):
 
 
 # ─────────────────────────────────────────────────────
-# 5. KOD İLE ÜRÜN ŞEKLİ ÇİZ (fotoğraf modu için)
-#    API'ya HİÇ gitmiyor — sade şekil PIL ile çizilir
-#    Üzerine fotoğraf texture olarak yapıştırılır
+# 5. KOD İLE ÜRÜN ŞEKLİ ÇİZ (fotoğraf modu)
 # ─────────────────────────────────────────────────────
 def kod_ile_urun_olustur(urun_tipi):
     w, h = URUN_BOYUTLARI.get(urun_tipi, (512, 512))
@@ -255,17 +252,13 @@ def kod_ile_urun_olustur(urun_tipi):
     if urun_tipi == "kilim":
         px, py = int(w*0.06), int(h*0.08)
         x0, y0, x1, y1 = px, py, w-px, h-py
-        # Hafif gölge
         for i in range(10, 0, -1):
             g = 255 - i*12
             d.rectangle([x0+i, y0+i, x1+i, y1+i], fill=(g, g, g))
-        # Zemin
         d.rectangle([x0, y0, x1, y1], fill=(210, 195, 170))
-        # Kenar şeritleri (kilim bordür hissi)
-        d.rectangle([x0,    y0,    x1,    y1],    outline=(150,120, 90), width=4)
-        d.rectangle([x0+10, y0+10, x1-10, y1-10], outline=(170,140,110), width=2)
-        d.rectangle([x0+18, y0+18, x1-18, y1-18], outline=(150,120, 90), width=1)
-        # Hafif iç gölge (3D his için sol ve üst kenar koyu)
+        d.rectangle([x0,    y0,    x1,    y1],    outline=(150, 120, 90), width=4)
+        d.rectangle([x0+10, y0+10, x1-10, y1-10], outline=(170, 140, 110), width=2)
+        d.rectangle([x0+18, y0+18, x1-18, y1-18], outline=(150, 120, 90), width=1)
         for i in range(20):
             alfa = int(60 * (1 - i/20))
             g    = max(0, 210 - alfa)
@@ -274,22 +267,19 @@ def kod_ile_urun_olustur(urun_tipi):
 
     elif urun_tipi == "tabak":
         cx, cy = w//2, h//2
-        r = int(min(w,h) * 0.42)
-        # Gölge
+        r = int(min(w, h) * 0.42)
         for i in range(8, 0, -1):
             g = 255 - i*10
-            d.ellipse([cx-r+i, cy-r+i, cx+r+i, cy+r+i], fill=(g,g,g))
+            d.ellipse([cx-r+i, cy-r+i, cx+r+i, cy+r+i], fill=(g, g, g))
         d.ellipse([cx-r, cy-r, cx+r, cy+r], fill=(220, 215, 208))
-        d.ellipse([cx-r+6, cy-r+6, cx+r-6, cy+r-6], outline=(180,170,160), width=2)
+        d.ellipse([cx-r+6, cy-r+6, cx+r-6, cy+r-6], outline=(180, 170, 160), width=2)
 
     elif urun_tipi in ("vazo", "comlek"):
         px = int(w*0.25); top = int(h*0.08); bot = int(h*0.92)
-        # Gölge
-        for i in range(8,0,-1):
+        for i in range(8, 0, -1):
             g = 255 - i*10
-            d.rectangle([px+i, top+i, w-px+i, bot+i], fill=(g,g,g))
+            d.rectangle([px+i, top+i, w-px+i, bot+i], fill=(g, g, g))
         d.rectangle([px, top, w-px, bot], fill=(220, 215, 208))
-        # Sol taraf karartma (3D his)
         for i in range(int(w*0.1)):
             alfa = int(50 * (1 - i/(w*0.1)))
             g    = max(0, 220 - alfa)
@@ -298,14 +288,13 @@ def kod_ile_urun_olustur(urun_tipi):
     elif urun_tipi == "bardak":
         px = int(w*0.22); top = int(h*0.10); bot = int(h*0.88)
         d.rectangle([px, top, w-px, bot], fill=(220, 215, 208))
-        # Kulp
         kx = w - px
         d.arc([kx-15, top+40, kx+45, top+150], start=300, end=60,
-              fill=(180,170,160), width=10)
+              fill=(180, 170, 160), width=10)
         for i in range(int(w*0.08)):
             alfa = int(45*(1-i/(w*0.08)))
-            g    = max(0,220-alfa)
-            d.line([(px+i,top),(px+i,bot)],fill=(g,g-5,g-10))
+            g    = max(0, 220-alfa)
+            d.line([(px+i, top), (px+i, bot)], fill=(g, g-5, g-10))
 
     print(f"  🎨 Kod ile {urun_tipi} şekli oluşturuldu ({w}×{h})")
     return img
@@ -320,31 +309,32 @@ def urun_maskesi_al(img_rgb):
     if REMBG_MEVCUT:
         try:
             print("  🧹 rembg maske alınıyor...")
-            buf = BytesIO(); img_rgb.save(buf, format="PNG"); buf.seek(0)
-            sonuc = Image.open(BytesIO(rembg_remove(buf.read()))).convert("RGBA")
-            alfa  = np.array(sonuc)[:,:,3]
+            buf = BytesIO()
+            img_rgb.save(buf, format="PNG")
+            buf.seek(0)
+            sonuc   = Image.open(BytesIO(rembg_remove(buf.read()))).convert("RGBA")
+            alfa    = np.array(sonuc)[:, :, 3]
             gecerli = (alfa > 30).sum() / alfa.size
             print(f"  Maske oranı: %{gecerli*100:.1f}")
             if gecerli > 0.05:
                 print("  ✅ rembg başarılı")
-                m = Image.fromarray(alfa,"L").filter(ImageFilter.GaussianBlur(1))
-                return m.resize((w,h), Image.LANCZOS)
+                m = Image.fromarray(alfa, "L").filter(ImageFilter.GaussianBlur(1))
+                return m.resize((w, h), Image.LANCZOS)
         except Exception as e:
             print(f"  ⚠️ rembg: {e}")
 
-    # Renk bazlı yedek
     print("  🎨 Renk bazlı maske...")
-    arr  = np.array(img_rgb, dtype=np.float32)
-    hh, ww = arr.shape[:2]
-    koseler = np.array([arr[0,0],arr[0,ww-1],arr[hh-1,0],arr[hh-1,ww-1],
-                        arr[0,ww//2],arr[hh//2,0],arr[hh//2,ww-1],arr[hh-1,ww//2]])
-    bg  = np.median(koseler, axis=0)
-    mes = np.sqrt(((arr - bg)**2).sum(axis=2))
-    esik = max(35, np.percentile(mes, 20))
+    arr     = np.array(img_rgb, dtype=np.float32)
+    hh, ww  = arr.shape[:2]
+    koseler = np.array([arr[0,0], arr[0,ww-1], arr[hh-1,0], arr[hh-1,ww-1],
+                        arr[0,ww//2], arr[hh//2,0], arr[hh//2,ww-1], arr[hh-1,ww//2]])
+    bg      = np.median(koseler, axis=0)
+    mes     = np.sqrt(((arr - bg)**2).sum(axis=2))
+    esik    = max(35, np.percentile(mes, 20))
     alfa_arr = np.where(mes < esik, 0, 255).astype(np.uint8)
-    m = Image.fromarray(alfa_arr,"L")
+    m = Image.fromarray(alfa_arr, "L")
     m = m.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(2))
-    return m.resize((w,h), Image.LANCZOS)
+    return m.resize((w, h), Image.LANCZOS)
 
 
 # ─────────────────────────────────────────────────────
@@ -361,48 +351,45 @@ def fotografi_urune_texture_sar(urun_img, fotograf_img, urun_tipi="vazo"):
 
     if gecerli < 0.05:
         print("  ⚠️ Maske çok küçük, tam yüzey")
-        maske_arr = np.ones((h,w), dtype=np.float32)
+        maske_arr = np.ones((h, w), dtype=np.float32)
 
-    # Bounding box
-    mb = maske_arr > 0.1
-    satir = np.any(mb, axis=1); sutun = np.any(mb, axis=0)
+    mb    = maske_arr > 0.1
+    satir = np.any(mb, axis=1)
+    sutun = np.any(mb, axis=0)
     if satir.any() and sutun.any():
-        y1 = max(0,   np.where(satir)[0][0]  - 4)
-        y2 = min(h,   np.where(satir)[0][-1] + 4)
-        x1 = max(0,   np.where(sutun)[0][0]  - 4)
-        x2 = min(w,   np.where(sutun)[0][-1] + 4)
+        y1 = max(0, int(np.where(satir)[0][0])  - 4)
+        y2 = min(h, int(np.where(satir)[0][-1]) + 4)
+        x1 = max(0, int(np.where(sutun)[0][0])  - 4)
+        x2 = min(w, int(np.where(sutun)[0][-1]) + 4)
     else:
-        y1,y2,x1,x2 = 0,h,0,w
+        y1, y2, x1, x2 = 0, h, 0, w
 
     alan_w = max(x2-x1, 1)
     alan_h = max(y2-y1, 1)
     print(f"  Ürün alanı: ({x1},{y1})→({x2},{y2}), {alan_w}×{alan_h}")
 
-    # Fotoğrafı ürün alanına sığdır (cover)
-    foto = fotograf_img.convert("RGB")
+    foto   = fotograf_img.convert("RGB")
     fw, fh = foto.size
-    oran = max(alan_w/fw, alan_h/fh)
-    foto = foto.resize((int(fw*oran), int(fh*oran)), Image.LANCZOS)
+    oran   = max(alan_w/fw, alan_h/fh)
+    foto   = foto.resize((int(fw*oran), int(fh*oran)), Image.LANCZOS)
     fw2, fh2 = foto.size
-    sol = (fw2-alan_w)//2; ust = (fh2-alan_h)//2
+    sol  = (fw2-alan_w)//2
+    ust  = (fh2-alan_h)//2
     foto = foto.crop((sol, ust, sol+alan_w, ust+alan_h))
 
-    # Texture tuvali
-    texture = Image.new("RGB", (w,h), (240,240,240))
-    texture.paste(foto, (x1,y1))
+    texture = Image.new("RGB", (w, h), (240, 240, 240))
+    texture.paste(foto, (x1, y1))
 
-    # Shading (ürün 3D formu)
     urun_gray = np.array(urun_img.convert("L"), dtype=np.float32) / 255.0
     shading   = np.clip(urun_gray * 1.1 + 0.15, 0.4, 1.15)
     tex_arr   = np.array(texture, dtype=np.float32) / 255.0
-    blended   = np.clip(tex_arr * shading[:,:,np.newaxis], 0, 1)
+    blended   = np.clip(tex_arr * shading[:, :, np.newaxis], 0, 1)
     sonuc_img = Image.fromarray((blended*255).astype(np.uint8), "RGB")
     sonuc_img = ImageEnhance.Color(sonuc_img).enhance(1.15)
     sonuc_img = ImageEnhance.Contrast(sonuc_img).enhance(1.05)
 
-    # Beyaz arka plana yapıştır
-    beyaz = Image.new("RGB", (w,h), (255,255,255))
-    beyaz.paste(sonuc_img, (0,0), Image.fromarray((maske_arr*255).astype(np.uint8),"L"))
+    beyaz = Image.new("RGB", (w, h), (255, 255, 255))
+    beyaz.paste(sonuc_img, (0, 0), Image.fromarray((maske_arr*255).astype(np.uint8), "L"))
 
     print("  ✅ Texture sarma tamamlandı")
     return beyaz
@@ -418,35 +405,50 @@ def metni_ekle(gorsel, metin, konum="orta"):
     font = None
     for yol in ["/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
                 "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]:
-        try: font = ImageFont.truetype(yol, font_size); break
-        except: pass
-    if not font: font = ImageFont.load_default()
+        try:
+            font = ImageFont.truetype(yol, font_size)
+            break
+        except:
+            pass
+    if not font:
+        font = ImageFont.load_default()
 
     d = ImageDraw.Draw(img)
-    try: bbox = d.textbbox((0,0),metin,font=font); tw,th = bbox[2]-bbox[0],bbox[3]-bbox[1]
-    except: tw,th = len(metin)*20, 40
+    try:
+        bbox = d.textbbox((0, 0), metin, font=font)
+        tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
+    except:
+        tw, th = len(metin)*20, 40
 
-    pos = {"orta":((w-tw)//2,(h-th)//2),"ust":((w-tw)//2,int(h*0.12)),
-           "alt":((w-tw)//2,h-th-int(h*0.12)),"sol_ust":(int(w*0.08),int(h*0.12)),
-           "sag_ust":(w-tw-int(w*0.08),int(h*0.12)),"sol_alt":(int(w*0.08),h-th-int(h*0.12)),
-           "sag_alt":(w-tw-int(w*0.08),h-th-int(h*0.12))}
-    x,y = pos.get(konum, pos["orta"])
+    pos = {
+        "orta":    ((w-tw)//2, (h-th)//2),
+        "ust":     ((w-tw)//2, int(h*0.12)),
+        "alt":     ((w-tw)//2, h-th-int(h*0.12)),
+        "sol_ust": (int(w*0.08), int(h*0.12)),
+        "sag_ust": (w-tw-int(w*0.08), int(h*0.12)),
+        "sol_alt": (int(w*0.08), h-th-int(h*0.12)),
+        "sag_alt": (w-tw-int(w*0.08), h-th-int(h*0.12)),
+    }
+    x, y = pos.get(konum, pos["orta"])
 
-    golge = Image.new("RGBA",img.size,(0,0,0,0))
-    ImageDraw.Draw(golge).text((x+3,y+3),metin,font=font,fill=(20,10,5,90))
+    golge = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(golge).text((x+3, y+3), metin, font=font, fill=(20, 10, 5, 90))
     golge = golge.filter(ImageFilter.GaussianBlur(2.5))
 
-    boya = Image.new("RGBA",img.size,(0,0,0,0))
+    boya = Image.new("RGBA", img.size, (0, 0, 0, 0))
     bd   = ImageDraw.Draw(boya)
-    for ox,oy,c in [(-1,0,(15,30,100,80)),(1,0,(15,30,100,80)),
-                    (0,-1,(15,30,100,80)),(0,1,(15,30,100,80)),(0,0,(30,50,140,210))]:
-        bd.text((x+ox,y+oy),metin,font=font,fill=c)
+    for ox, oy, c in [(-1,0,(15,30,100,80)), (1,0,(15,30,100,80)),
+                      (0,-1,(15,30,100,80)), (0,1,(15,30,100,80)),
+                      (0,0,(30,50,140,210))]:
+        bd.text((x+ox, y+oy), metin, font=font, fill=c)
 
-    return Image.alpha_composite(Image.alpha_composite(img,golge),boya).convert("RGB")
+    return Image.alpha_composite(Image.alpha_composite(img, golge), boya).convert("RGB")
 
 
 def gorsel_to_base64(g):
-    buf = BytesIO(); g.save(buf,format="PNG"); buf.seek(0)
+    buf = BytesIO()
+    g.save(buf, format="PNG")
+    buf.seek(0)
     return base64.b64encode(buf.read()).decode("utf-8")
 
 
@@ -457,18 +459,19 @@ tasarim_oturumlari = {}
 
 @app.route("/saglik", methods=["GET"])
 def saglik():
-    return jsonify({"durum":"çalışıyor","rembg":REMBG_MEVCUT})
+    return jsonify({"durum": "çalışıyor", "rembg": REMBG_MEVCUT})
+
 
 @app.route("/uret", methods=["POST"])
 def uret():
     try:
-        istek_metni = request.form.get("istek","").strip()
+        istek_metni = request.form.get("istek", "").strip()
         if not istek_metni:
-            return jsonify({"basarili":False,"hata":"istek boş"}), 400
+            return jsonify({"basarili": False, "hata": "istek boş"}), 400
 
         t0        = time.time()
         analiz    = istek_analiz_et(istek_metni)
-        urun_tipi = analiz.get("urun_tipi","vazo")
+        urun_tipi = analiz.get("urun_tipi", "vazo")
         print(f"Analiz: {analiz}")
 
         fotograf_yolu = None
@@ -479,7 +482,6 @@ def uret():
                 d.save(fotograf_yolu)
 
         if fotograf_yolu:
-            # FOTOĞRAF MODU — API'ya gitme, kod ile şekil çiz
             urun_img  = kod_ile_urun_olustur(urun_tipi)
             desen_img = Image.open(fotograf_yolu).convert("RGB")
             gorsel    = fotografi_urune_texture_sar(urun_img, desen_img, urun_tipi)
@@ -487,29 +489,29 @@ def uret():
             except: pass
             kullanilan_prompt = "fotograf_modu"
         else:
-            # PROMPT MODU
             kullanilan_prompt = prompt_olustur(analiz)
             print(f"Prompt: {kullanilan_prompt}")
             gorsel = gorsel_uret(kullanilan_prompt, urun_tipi)
 
         if analiz.get("metin"):
-            gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum","orta"))
+            gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
 
         print(f"  ⏱️ {time.time()-t0:.1f}s")
-        return jsonify({"basarili":True,"gorsel_base64":gorsel_to_base64(gorsel),
-                        "analiz":analiz,"prompt_kullanildi":kullanilan_prompt})
+        return jsonify({"basarili": True, "gorsel_base64": gorsel_to_base64(gorsel),
+                        "analiz": analiz, "prompt_kullanildi": kullanilan_prompt})
     except Exception as e:
         import traceback; traceback.print_exc()
-        return jsonify({"basarili":False,"hata":str(e)}), 500
+        return jsonify({"basarili": False, "hata": str(e)}), 500
+
 
 @app.route("/tasarim/baslat", methods=["POST"])
 def tasarim_baslat():
     try:
-        data     = request.json or {}
-        prompt_k = data.get("prompt","").strip()
-        urun_tipi= data.get("urun_tipi","vazo")
+        data      = request.json or {}
+        prompt_k  = data.get("prompt", "").strip()
+        urun_tipi = data.get("urun_tipi", "vazo")
         if not prompt_k:
-            return jsonify({"basarili":False,"hata":"prompt boş"}), 400
+            return jsonify({"basarili": False, "hata": "prompt boş"}), 400
 
         session_id = base64.b64encode(os.urandom(16)).decode()[:16]
         analiz = istek_analiz_et(prompt_k)
@@ -517,28 +519,29 @@ def tasarim_baslat():
         prompt = prompt_olustur(analiz)
         gorsel = gorsel_uret(prompt, urun_tipi)
         if analiz.get("metin"):
-            gorsel = metni_ekle(gorsel,analiz["metin"],analiz.get("metin_konum","orta"))
+            gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
 
         tasarim_oturumlari[session_id] = {
-            "son_gorsel":gorsel,"tasarim_gecmisi":[gorsel],
-            "prompt_gecmisi":[prompt_k],"urun_tipi":urun_tipi,"analiz":analiz
+            "son_gorsel": gorsel, "tasarim_gecmisi": [gorsel],
+            "prompt_gecmisi": [prompt_k], "urun_tipi": urun_tipi, "analiz": analiz
         }
-        return jsonify({"basarili":True,"session_id":session_id,
-                        "gorsel_base64":gorsel_to_base64(gorsel),"analiz":analiz})
+        return jsonify({"basarili": True, "session_id": session_id,
+                        "gorsel_base64": gorsel_to_base64(gorsel), "analiz": analiz})
     except Exception as e:
         import traceback; traceback.print_exc()
-        return jsonify({"basarili":False,"hata":str(e)}), 500
+        return jsonify({"basarili": False, "hata": str(e)}), 500
+
 
 @app.route("/tasarim/duzenle", methods=["POST"])
 def tasarim_duzenle():
     try:
         data          = request.json or {}
-        session_id    = data.get("session_id","")
-        geri_bildirim = data.get("geri_bildirim","").strip()
+        session_id    = data.get("session_id", "")
+        geri_bildirim = data.get("geri_bildirim", "").strip()
         if session_id not in tasarim_oturumlari:
-            return jsonify({"basarili":False,"hata":"Oturum bulunamadı"}), 404
+            return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
         if not geri_bildirim:
-            return jsonify({"basarili":False,"hata":"geri_bildirim boş"}), 400
+            return jsonify({"basarili": False, "hata": "geri_bildirim boş"}), 400
 
         oturum    = tasarim_oturumlari[session_id]
         urun_tipi = oturum["urun_tipi"]
@@ -548,107 +551,117 @@ def tasarim_duzenle():
         prompt = prompt_olustur(analiz)
         gorsel = gorsel_uret(prompt, urun_tipi)
         if analiz.get("metin"):
-            gorsel = metni_ekle(gorsel,analiz["metin"],analiz.get("metin_konum","orta"))
+            gorsel = metni_ekle(gorsel, analiz["metin"], analiz.get("metin_konum", "orta"))
 
         oturum["son_gorsel"] = gorsel
         oturum["tasarim_gecmisi"].append(gorsel)
         oturum["prompt_gecmisi"].append(geri_bildirim)
         oturum["analiz"] = analiz
-        return jsonify({"basarili":True,"gorsel_base64":gorsel_to_base64(gorsel),
-                        "analiz":analiz,"prompt_kullanildi":prompt})
+        return jsonify({"basarili": True, "gorsel_base64": gorsel_to_base64(gorsel),
+                        "analiz": analiz, "prompt_kullanildi": prompt})
     except Exception as e:
         import traceback; traceback.print_exc()
-        return jsonify({"basarili":False,"hata":str(e)}), 500
+        return jsonify({"basarili": False, "hata": str(e)}), 500
+
 
 @app.route("/tasarim/fotograf_ekle", methods=["POST"])
 def tasarim_fotograf_ekle():
     try:
-        session_id = request.form.get("session_id","")
+        session_id = request.form.get("session_id", "")
         dosya      = request.files.get("fotograf")
         if not dosya:
-            return jsonify({"basarili":False,"hata":"Fotoğraf gerekli"}), 400
+            return jsonify({"basarili": False, "hata": "Fotoğraf gerekli"}), 400
         if session_id not in tasarim_oturumlari:
-            return jsonify({"basarili":False,"hata":"Oturum bulunamadı"}), 404
+            return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
 
         fotograf_yolu = f"/tmp/{int(time.time())}_{dosya.filename}"
         dosya.save(fotograf_yolu)
         oturum    = tasarim_oturumlari[session_id]
         urun_tipi = oturum["urun_tipi"]
 
-        # FOTOĞRAF MODU — kod ile şekil
         urun_img  = kod_ile_urun_olustur(urun_tipi)
         desen_img = Image.open(fotograf_yolu).convert("RGB")
         gorsel    = fotografi_urune_texture_sar(urun_img, desen_img, urun_tipi)
         if oturum["analiz"].get("metin"):
-            gorsel = metni_ekle(gorsel,oturum["analiz"]["metin"],oturum["analiz"].get("metin_konum","orta"))
+            gorsel = metni_ekle(gorsel, oturum["analiz"]["metin"],
+                                oturum["analiz"].get("metin_konum", "orta"))
 
         oturum["son_gorsel"] = gorsel
         oturum["tasarim_gecmisi"].append(gorsel)
         try: os.remove(fotograf_yolu)
         except: pass
-        return jsonify({"basarili":True,"gorsel_base64":gorsel_to_base64(gorsel)})
+        return jsonify({"basarili": True, "gorsel_base64": gorsel_to_base64(gorsel)})
     except Exception as e:
         import traceback; traceback.print_exc()
-        return jsonify({"basarili":False,"hata":str(e)}), 500
+        return jsonify({"basarili": False, "hata": str(e)}), 500
+
 
 @app.route("/tasarim/gerial", methods=["POST"])
 def tasarim_gerial():
     try:
-        session_id = (request.json or {}).get("session_id","")
+        session_id = (request.json or {}).get("session_id", "")
         if session_id not in tasarim_oturumlari:
-            return jsonify({"basarili":False,"hata":"Oturum bulunamadı"}), 404
+            return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
         oturum = tasarim_oturumlari[session_id]
         if len(oturum["tasarim_gecmisi"]) > 1:
             oturum["tasarim_gecmisi"].pop()
-            if len(oturum["prompt_gecmisi"]) > 1: oturum["prompt_gecmisi"].pop()
+            if len(oturum["prompt_gecmisi"]) > 1:
+                oturum["prompt_gecmisi"].pop()
             oturum["son_gorsel"] = oturum["tasarim_gecmisi"][-1]
-            return jsonify({"basarili":True,"gorsel_base64":gorsel_to_base64(oturum["son_gorsel"])})
-        return jsonify({"basarili":False,"hata":"Geri alınacak değişiklik yok"}), 400
+            return jsonify({"basarili": True,
+                            "gorsel_base64": gorsel_to_base64(oturum["son_gorsel"])})
+        return jsonify({"basarili": False, "hata": "Geri alınacak değişiklik yok"}), 400
     except Exception as e:
-        return jsonify({"basarili":False,"hata":str(e)}), 500
+        return jsonify({"basarili": False, "hata": str(e)}), 500
+
 
 @app.route("/tasarim/kaydet", methods=["POST"])
 def tasarim_kaydet():
     try:
         data       = request.json or {}
-        session_id = data.get("session_id","")
-        dosya_adi  = data.get("dosya_adi","tasarim.png")
+        session_id = data.get("session_id", "")
+        dosya_adi  = data.get("dosya_adi", "tasarim.png")
         if session_id not in tasarim_oturumlari:
-            return jsonify({"basarili":False,"hata":"Oturum bulunamadı"}), 404
+            return jsonify({"basarili": False, "hata": "Oturum bulunamadı"}), 404
         oturum     = tasarim_oturumlari[session_id]
         kayit_yolu = f"/tmp/son_tasarimlar/{session_id}_{dosya_adi}"
         os.makedirs("/tmp/son_tasarimlar", exist_ok=True)
         oturum["son_gorsel"].save(kayit_yolu)
-        return jsonify({"basarili":True,"dosya_yolu":kayit_yolu,"mesaj":"Kaydedildi"})
+        return jsonify({"basarili": True, "dosya_yolu": kayit_yolu, "mesaj": "Kaydedildi"})
     except Exception as e:
-        return jsonify({"basarili":False,"hata":str(e)}), 500
+        return jsonify({"basarili": False, "hata": str(e)}), 500
 
 
-# ════════════════════════════════════════════════════════
-# 10. BAŞLAT 
-# ════════════════════════════════════════════════════════
-if __name__ == "__main__":
-    # Windows için temp klasör
-    if sys.platform == "win32":
-        import tempfile
-        TEMP_DIR = tempfile.gettempdir()
-        # Global değişken olarak tanımla (üstteki fonksiyonlar için)
-        # Not: Bu basit bir çözüm, aslında tüm /tmp'leri değiştirmek gerekir
-    
-    print("="*50)
-    print("✅ KapadokyaCraft v9 başlatılıyor...")
-    print(f"   rembg: {'✅ AKTİF' if REMBG_MEVCUT else '⚠️ PASİF (renk bazlı yedek)'}")
-    print("="*50)
-    print("📡 API Endpoint: http://localhost:5000")
-    print("   - POST /uret")
-    print("   - POST /tasarim/baslat")
-    print("   - GET  /saglik")
-    print("─" * 50)
-    
-    # Port kontrolü
-    port = 5000
-    try:
-        app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
-    except OSError:
-        print(f"⚠️ Port {port} kullanımda, {port+1} deneniyor...")
-        app.run(host="0.0.0.0", port=port+1, debug=False, threaded=True)
+# ─────────────────────────────────────────────────────
+# 10. BAŞLAT
+#     - Colab (notebook) ve normal Python'da çalışır
+#     - Port meşgulse otomatik temizler
+#     - threading ile arka planda başlar (notebook donmaz)
+# ─────────────────────────────────────────────────────
+import logging
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
+# Portu temizle (önceki çalıştırmalar varsa)
+os.system("fuser -k 5000/tcp 2>/dev/null || true")
+time.sleep(1)
+
+def _flask_calistir():
+    for port in [5000, 5001, 5002]:
+        try:
+            print(f"📡 Port {port} başlatılıyor...")
+            app.run(host="0.0.0.0", port=port, debug=False,
+                    threaded=True, use_reloader=False)
+            break
+        except SystemExit:
+            print(f"⚠️ Port {port} dolu, {port+1} deneniyor...")
+
+_t = threading.Thread(target=_flask_calistir)
+_t.daemon = True
+_t.start()
+time.sleep(2)
+
+print("=" * 50)
+print("✅ KapadokyaCraft v9 FINAL hazır!")
+print(f"   rembg: {'✅ aktif' if REMBG_MEVCUT else '⚠️ yok (renk bazlı yedek)'}")
+print("📡 http://localhost:5000/uret")
+print("=" * 50)
