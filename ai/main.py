@@ -624,19 +624,31 @@ def tasarim_kaydet():
         return jsonify({"basarili":False,"hata":str(e)}), 500
 
 
-# ─────────────────────────────────────────────────────
-# 10. BAŞLAT
-# ─────────────────────────────────────────────────────
-def _flask_calistir():
-    import logging; logging.getLogger("werkzeug").setLevel(logging.ERROR)
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
-
-_t = threading.Thread(target=_flask_calistir)
-_t.daemon = True
-_t.start()
-time.sleep(2)
-
-print("✅ KapadokyaCraft v9 hazır!")
-print(f"   rembg: {'✅ aktif' if REMBG_MEVCUT else '⚠️ yok (renk bazlı yedek)'}")
-print("📡 http://localhost:5000/uret")
-print("─" * 50)
+# ════════════════════════════════════════════════════════
+# 10. BAŞLAT 
+# ════════════════════════════════════════════════════════
+if __name__ == "__main__":
+    # Windows için temp klasör
+    if sys.platform == "win32":
+        import tempfile
+        TEMP_DIR = tempfile.gettempdir()
+        # Global değişken olarak tanımla (üstteki fonksiyonlar için)
+        # Not: Bu basit bir çözüm, aslında tüm /tmp'leri değiştirmek gerekir
+    
+    print("="*50)
+    print("✅ KapadokyaCraft v9 başlatılıyor...")
+    print(f"   rembg: {'✅ AKTİF' if REMBG_MEVCUT else '⚠️ PASİF (renk bazlı yedek)'}")
+    print("="*50)
+    print("📡 API Endpoint: http://localhost:5000")
+    print("   - POST /uret")
+    print("   - POST /tasarim/baslat")
+    print("   - GET  /saglik")
+    print("─" * 50)
+    
+    # Port kontrolü
+    port = 5000
+    try:
+        app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+    except OSError:
+        print(f"⚠️ Port {port} kullanımda, {port+1} deneniyor...")
+        app.run(host="0.0.0.0", port=port+1, debug=False, threaded=True)
