@@ -195,6 +195,25 @@ body {
 .navbar__btn--icon:hover { color: var(--c-accent); }
 .navbar__btn--icon .ms { font-size: 22px; }
 
+.navbar__cart-btn { position: relative; }
+.navbar__cart-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+}
+
 .navbar__btn--primary {
   background: var(--c-accent);
   color: #fff;

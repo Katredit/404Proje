@@ -4,53 +4,70 @@ const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
-  const [cartOpen, setCartOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const addItem = useCallback((product, store) => {
     setItems(prev => {
-      const existing = prev.find(i => i.product.id === product.id && i.storeId === store.id);
+      const existing = prev.find(
+        item => item.product.id === product.id && item.store.id === store.id
+      );
       if (existing) {
-        return prev.map(i =>
-          i.product.id === product.id && i.storeId === store.id
-            ? { ...i, qty: i.qty + 1 }
-            : i
+        return prev.map(item =>
+          item.product.id === product.id && item.store.id === store.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
-      return [...prev, { product, storeId: store.id, storeName: store.name, storeFlag: store.flag, qty: 1 }];
+      return [...prev, { product, store, quantity: 1 }];
     });
-    setCartOpen(true);
+    setIsOpen(true);
   }, []);
 
   const removeItem = useCallback((productId, storeId) => {
-    setItems(prev => prev.filter(i => !(i.product.id === productId && i.storeId === storeId)));
+    setItems(prev =>
+      prev.filter(item => !(item.product.id === productId && item.store.id === storeId))
+    );
   }, []);
 
-  const updateQty = useCallback((productId, storeId, qty) => {
-    if (qty < 1) {
-      removeItem(productId, storeId);
-      return;
-    }
+  const updateQuantity = useCallback((productId, storeId, delta) => {
     setItems(prev =>
-      prev.map(i =>
-        i.product.id === productId && i.storeId === storeId ? { ...i, qty } : i
-      )
+      prev
+        .map(item => {
+          if (item.product.id === productId && item.store.id === storeId) {
+            const newQty = item.quantity + delta;
+            if (newQty <= 0) return null;
+            return { ...item, quantity: newQty };
+          }
+          return item;
+        })
+        .filter(Boolean)
     );
-  }, [removeItem]);
+  }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  const totalCount = items.reduce((s, i) => s + i.qty, 0);
-  const totalPrice = items.reduce((s, i) => s + i.product.price * i.qty, 0);
+  const totalCount = items.reduce((acc, item) => acc + item.quantity, 0);
+  const totalPrice = items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQty, clearCart, totalCount, totalPrice, cartOpen, setCartOpen }}>
+    <CartContext.Provider
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        isOpen,
+        setIsOpen,
+        totalCount,
+        totalPrice,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
 }
 
 export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within CartProvider');
-  return ctx;
+  return useContext(CartContext);
 }

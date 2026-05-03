@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "brand": "Kapadokya Çarşısı",
     "subtitle": "El Sanatları & Yöresel Ürünler",
@@ -7,9 +7,7 @@
     "aiLong": "Yapay Zeka Tasarım",
     "seller": "Satıcı Ol",
     "login": "Giriş Yap",
-    "search": "Ara...",
-    "myStore": "Dükkanım",
-    "logout": "Çıkış"
+    "search": "Ara..."
   },
   "market": {
     "title": "Kapadokya 3D Çarşısı",
@@ -70,29 +68,6 @@
     "errorServer": "Sunucu hatası: {{code}}",
     "errorNoImage": "API geçerli bir görsel döndürmedi.",
     "errorGeneric": "Görsel oluşturulurken bir hata oluştu.",
-    "productType": "Rün Tipi",
-    "readyTemplates": "Hazır Şablonlar",
-    "designDesc": "Tasarım Açıklaması",
-    "required": "*",
-    "photoLabel": "Desen Fotoğrafı",
-    "photoHint": "— opsiyonel",
-    "photoAdd": "Fotoğraf ekle veya sürükle",
-    "vazoPlaceholder": "Örn: Mavi ve beyaz tonlarda lale motifli, Kapadokya stilinde bir vazo...",
-    "kilimPlaceholder": "Örn: Kırmızı ve lacivert geometrik desenli, Anadolu motifli kilim...",
-    "studioTitle": "AI Tasarım Stüdyosu",
-    "studioSub": "Geleneksel Kapadokya el sanatları için yapay zeka ile özgün tasarımlar oluşturun.",
-    "loadingDetail": "Bu işlem 15–30 saniye sürebilir",
-    "canvasPlaceholderTitle": "Tasarımınız burada görünecek",
-    "canvasPlaceholderText": "Sol panelden ürün tipi seçin, açıklama yazın ve \"Tasarım Oluştur\"a tıklayın.",
-    "downloadBtn": "İndir",
-    "undoBtn": "Geri Al",
-    "newDesignBtn": "Yeni Tasarım",
-    "editPanelTitle": "Tasarımı Düzenle",
-    "editPlaceholder": "\u00d6rn: \"renkleri koyulaştır\", \"ortaya lale motifi ekle\"...",
-    "editApply": "Uygula",
-    "editPhotoAdd": "Desen fotoğrafı ekle",
-    "editPhotoApply": "Deseni Uygula",
-    "historyLabel": "Geçmiş Tasarımlar",
     "presets": {
       "kilim": "Kilim",
       "comlek": "Çömlek",
